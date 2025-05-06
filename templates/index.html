@@ -4,278 +4,439 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⛽ Fuel Entry App</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .dark .table-header:hover { background-color: #4b5e7e; }
-        .sort-icon { display: none; }
-        .sorted-asc .sort-asc { display: inline; }
-        .sorted-desc .sort-desc { display: inline; }
-        .hidden { display: none; }
+        /* Simple offline CSS styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dark {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 2fr;
+            }
+        }
+
+        .panel {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .panel {
+            background-color: #2d3748;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .dark select, .dark input {
+            background-color: #4a5568;
+            border-color: #718096;
+            color: #e2e8f0;
+        }
+
+        button {
+            background-color: #3182ce;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #2b6cb0;
+        }
+
+        .pagination-btn:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #fff;
+        }
+
+        .toast.success {
+            background-color: #2f855a;
+        }
+
+        .toast.error {
+            background-color: #c53030;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .dark th, .dark td {
+            border-bottom: 1px solid #4a5568;
+        }
+
+        th {
+            background-color: #edf2f7;
+        }
+
+        .dark th {
+            background-color: #4a5568;
+        }
+
+        tr.new {
+            background-color: #fefcbf;
+        }
+
+        .dark tr.new {
+            background-color: #744210;
+        }
+
+        .sidebar {
+            margin-top: 20px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .sidebar {
+            background-color: #2d3748;
+        }
+
+        .btn-teal {
+            background-color: #319795;
+        }
+
+        .btn-teal:hover:not(:disabled) {
+            background-color: #2c7a7b;
+        }
+
+        .btn-rose {
+            background-color: #e53e3e;
+        }
+
+        .btn-rose:hover:not(:disabled) {
+            background-color: #c53030;
+        }
+
+        .theme-toggle {
+            padding: 8px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            border: none;
+            cursor: pointer;
+        }
+
+        .dark .theme-toggle {
+            background-color: #4a5568;
+        }
+
+        .overflow-x-auto {
+            overflow-x: auto;
+        }
+
+        .text-orange {
+            color: #ed8936;
+        }
+
+        .text-gray {
+            color: #a0aec0;
+        }
+
+        .text-rose {
+            color: #e53e3e;
+        }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <div class="container mx-auto p-6 max-w-4xl">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold flex items-center">
-                <span class="mr-2">⛽</span> Aplikasi Pencatatan Bahan Bakar Unit
-            </h1>
-            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path id="sun" class="hidden dark:block" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                    <path id="moon" class="block dark:hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                </svg>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+    <div class="container">
+        <header>
+            <h1>⛽ Aplikasi Pencatatan Bahan Bakar Unit</h1>
+            <button id="theme-toggle" class="theme-toggle">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:block"></i>
             </button>
-        </div>
+        </header>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="p-4 mb-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'error' %}bg-red-100 text-red-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Unit Selection -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                Pilih Unit
-            </h2>
-            <form method="POST" id="unit-form">
-                <select name="selected_unit" onchange="this.form.submit()" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+        <div class="grid">
+            <!-- Left Panel: Data Entry -->
+            <div class="panel">
+                <h2>🚛 Pilih Unit</h2>
+                <select id="unit-select" onchange="updateUnit()">
                     {% for unit in units %}
                         <option value="{{ unit }}" {% if unit == selected_unit %}selected{% endif %}>{{ unit }}</option>
                     {% endfor %}
                 </select>
-            </form>
-        </div>
 
-        <!-- Last Record -->
-        {% if last_hm_akhir != 0 %}
-            <div class="bg-blue-50 dark:bg-blue-900 p-6 rounded-lg shadow mb-6">
-                <h3 class="text-lg font-semibold mb-2 flex items-center">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Data Terakhir untuk {{ selected_unit }}
-                </h3>
-                <p>HM Awal: <span class="font-bold">{{ last_hm_akhir }}</span></p>
-            </div>
-        {% endif %}
-
-        <!-- Add New Data -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                Tambah Data Baru
-            </h2>
-            <form method="POST">
-                <input type="hidden" name="selected_unit" value="{{ selected_unit }}">
-                <label for="hm_akhir" class="block mb-2 font-medium">Masukkan HM Akhir (harus > HM Awal):</label>
-                <input type="number" name="hm_akhir" id="hm_akhir" step="0.01" min="{{ last_hm_akhir + 0.01 }}" value="{{ default_hm_akhir }}" required class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                <button type="submit" name="submit_data" class="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Simpan</button>
-            </form>
-            {% if new_literan is not none %}
-                <div class="mt-4 p-4 bg-yellow-300 dark:bg-yellow-500 text-black font-bold rounded-lg">
-                    Literan Baru: {{ new_literan }}
+                <div>
+                    <h3>📄 Data Terakhir</h3>
+                    <p>HM Awal: <span class="text-orange">{{ last_hm_akhir }}</span></p>
                 </div>
-            {% endif %}
-        </div>
 
-        <!-- Historical Data -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            <h2 class="text-xl font-semibold mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                Data Historis
-            </h2>
-
-            <!-- Filter by Unit -->
-            <div class="mb-4">
-                <label for="filter_unit" class="block mb-2 font-medium">Filter Kode Unit:</label>
-                <select id="filter_unit" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                    <option value="Semua" {% if filter_unit == 'Semua' %}selected{% endif %}>Semua</option>
-                    {% for unit in unique_units %}
-                        <option value="{{ unit }}" {% if unit == filter_unit %}selected{% endif %}>{{ unit }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Table -->
-            {% if historical_data %}
-                <div class="overflow-x-auto">
-                    <table id="data-table" class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-blue-500 text-white">
-                                <th class="p-2 cursor-pointer table-header" data-sort="NO_UNIT">NO_UNIT <span class="sort-icon sort-asc">↑</span><span class="sort-icon sort-desc">↓</span></th>
-                                <th class="p-2 cursor-pointer table-header" data-sort="HM_AWAL">HM_AWAL <span class="sort-icon sort-asc">↑</span><span class="sort-icon sort-desc">↓</span></th>
-                                <th class="p-2 cursor-pointer table-header" data-sort="HM_AKHIR">HM_AKHIR <span class="sort-icon sort-asc">↑</span><span class="sort-icon sort-desc">↓</span></th>
-                                <th class="p-2 cursor-pointer table-header" data-sort="SELISIH">SELISIH <span class="sort-icon sort-asc">↑</span><span class="sort-icon sort-desc">↓</span></th>
-                                <th class="p-2 cursor-pointer table-header" data-sort="LITERAN">LITERAN <span class="sort-icon sort-asc">↑</span><span class="sort-icon sort-desc">↓</span></th>
-                                <th class="p-2 cursor-pointer table-header" data-sort="PENJATAHAN">PENJATAHAN <span class="sort-icon sort-asc">↑</span><span class="sort-icon sort-desc">↓</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for record in historical_data %}
-                                <tr class="border-b dark:border-gray-700">
-                                    <td class="p-2">{{ record.NO_UNIT }}</td>
-                                    <td class="p-2">{{ record.HM_AWAL }}</td>
-                                    <td class="p-2">{{ record.HM_AKHIR }}</td>
-                                    <td class="p-2">{{ record.SELISIH }}</td>
-                                    <td class="p-2">{{ record.LITERAN }}</td>
-                                    <td class="p-2">{{ record.PENJATAHAN }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Pagination -->
-                <div class="mt-4 flex justify-between items-center">
+                <h2>➕ Tambah Data Baru</h2>
+                <form action="{{ url_for('add_record') }}" method="POST" id="fuel-form">
+                    <input type="hidden" name="no_unit" id="form-unit" value="{{ selected_unit }}">
                     <div>
-                        <span id="page-info">Halaman 1 dari 1</span>
+                        <label>Tanggal</label>
+                        <input type="date" name="date" value="{{ 'now'|strftime('%Y-%m-%d') }}" required>
                     </div>
-                    <div class="space-x-2">
-                        <button id="prev-page" class="p-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50" disabled>Sebelumnya</button>
-                        <button id="next-page" class="p-2 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50" disabled>Berikutnya</button>
+                    <div>
+                        <label>HM Akhir</label>
+                        <input type="number" name="hm_akhir" step="0.1" required>
                     </div>
+                    <button type="submit">Simpan</button>
+                </form>
+
+                <!-- Toast Notifications -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="toast {{ 'success' if category == 'success' else 'error' }}" id="toast">
+                                {{ message | safe }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Right Panel: Historical Data -->
+            <div class="panel">
+                <h2>📑 Data Historis</h2>
+                <div>
+                    <label>Filter Unit</label>
+                    <select onchange="filterData()" id="filter-unit">
+                        {% for unit in unique_units %}
+                            <option value="{{ unit }}" {% if unit == filter_unit %}selected{% endif %}>{{ unit }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-            {% else %}
-                <p class="text-blue-700 dark:text-blue-300">Belum ada data yang tersimpan.</p>
-            {% endif %}
+                {% if filtered_df %}
+                    <div class="overflow-x-auto">
+                        <table id="historical-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Unit</th>
+                                    <th>HM Awal</th>
+                                    <th>HM Akhir</th>
+                                    <th>Selisih</th>
+                                    <th>Literan</th>
+                                    <th>Penjatahan</th>
+                                    <th>Max Capacity</th>
+                                    <th>Buffer Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historical-body">
+                                {% for row in filtered_df %}
+                                    <tr class="{% if row.is_new %}new{% endif %}" style="display: none;">
+                                        <td>{{ row.Date }}</td>
+                                        <td>{{ row.NO_UNIT }}</td>
+                                        <td>{{ row.HM_AWAL }}</td>
+                                        <td>{{ row.HM_AKHIR }}</td>
+                                        <td>{{ row.SELISIH }}</td>
+                                        <td>{{ row.LITERAN }}</td>
+                                        <td>{{ row.PENJATAHAN }}</td>
+                                        <td>{{ row['Max Capacity'] }}</td>
+                                        <td>{{ row['Buffer Stock'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <button id="next-btn" class="pagination-btn">Next</button>
+                        <button id="show-all-btn" class="btn-teal">Lihat Semua</button>
+                    </div>
+                {% else %}
+                    <p class="text-gray">Belum ada data yang tersimpan.</p>
+                {% endif %}
+            </div>
         </div>
 
-        <!-- Export & Reset -->
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mt-6">
-            <h3 class="text-xl font-semibold mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Export & Reset
-            </h3>
-            {% if unique_units %}
-                <a href="{{ url_for('download_all') }}" class="inline-block mb-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">⬇️ Download Semua Data</a>
-                <form method="POST" class="mb-4">
-                    <label for="download_unit" class="block mb-2 font-medium">Pilih Unit untuk Export:</label>
-                    <select name="download_unit" id="download_unit" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
-                        {% for unit in unique_units %}
+        <!-- Sidebar: Export, Reset, PDF -->
+        <div class="sidebar">
+            <h2>💾 Export, Reset & Laporan</h2>
+            <div>
+                <a href="{{ url_for('export_all') }}" class="btn-teal">⬇️ Download Semua Data (Excel)</a>
+                <div>
+                    <label>Pilih Unit untuk Export</label>
+                    <select id="export-unit">
+                        {% for unit in units %}
                             <option value="{{ unit }}">{{ unit }}</option>
                         {% endfor %}
                     </select>
-                    <button type="submit" formaction="{{ url_for('download_unit', unit=unique_units[0]) }}" class="mt-2 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">⬇️ Download Data Unit</button>
-                </form>
-            {% endif %}
-            <hr class="my-4 dark:border-gray-700">
-            <p class="text-red-600 dark:text-red-400 font-semibold mb-2">⚠️ Reset akan menghapus semua data!</p>
-            <form method="POST" action="{{ url_for('reset') }}">
-                <button type="submit" onclick="return confirm('Apakah Anda yakin ingin reset semua data?')" class="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition">Reset Semua Data</button>
-            </form>
+                    <a id="export-unit-link" href="#" class="btn-teal">⬇️ Download Data Unit (Excel)</a>
+                </div>
+                <div>
+                    <h3>📄 Buat Laporan PDF</h3>
+                    <form action="{{ url_for('generate_pdf') }}" method="POST">
+                        <div>
+                            <label>Tanggal Laporan</label>
+                            <input type="date" name="report_date" value="{{ 'now'|strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div>
+                            <label>Shift</label>
+                            <select name="shift">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <button type="submit">Generate Laporan PDF</button>
+                    </form>
+                </div>
+                <div>
+                    <h3 class="text-rose">⚠️ Reset Data</h3>
+                    <p class="text-gray">Reset akan menghapus semua data! Backup akan dibuat.</p>
+                    <button onclick="confirmReset()" class="btn-rose">Reset Semua Data</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Dark Mode Toggle
+        // Theme Toggle
         const themeToggle = document.getElementById('theme-toggle');
-        const sunIcon = document.getElementById('sun');
-        const moonIcon = document.getElementById('moon');
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark');
-            sunIcon.classList.remove('hidden');
-            moonIcon.classList.add('hidden');
-        }
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark');
-            if (document.body.classList.contains('dark')) {
-                localStorage.setItem('theme', 'dark');
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
-            } else {
-                localStorage.setItem('theme', 'light');
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
-            }
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
         });
-
-        // Table Filtering, Sorting, and Pagination
-        const table = document.getElementById('data-table');
-        const rows = Array.from(table.querySelectorAll('tbody tr'));
-        const filterUnit = document.getElementById('filter_unit');
-        const headers = table.querySelectorAll('th');
-        let sortColumn = null;
-        let sortDirection = 'asc';
-        const rowsPerPage = 10;
-        let currentPage = 1;
-
-        function applyFiltersAndSort() {
-            let filteredRows = rows.filter(row => {
-                const noUnit = row.querySelector('td:first-child').textContent;
-                const selectedUnit = filterUnit.value;
-                return selectedUnit === 'Semua' || noUnit === selectedUnit;
-            });
-
-            if (sortColumn) {
-                filteredRows.sort((a, b) => {
-                    const aValue = a.querySelector(`td:nth-child(${headers[sortedColumns[sortColumn]].cellIndex + 1})`).textContent;
-                    const bValue = b.querySelector(`td:nth-child(${headers[sortedColumns[sortColumn]].cellIndex + 1})`).textContent;
-                    const aNum = parseFloat(aValue) || aValue;
-                    const bNum = parseFloat(bValue) || bValue;
-                    if (typeof aNum === 'number' && typeof bNum === 'number') {
-                        return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
-                    }
-                    return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-                });
-            }
-
-            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-            currentPage = Math.min(currentPage, totalPages || 1);
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-
-            rows.forEach(row => row.classList.add('hidden'));
-            filteredRows.slice(start, end).forEach(row => row.classList.remove('hidden'));
-
-            document.getElementById('page-info').textContent = `Halaman ${currentPage} dari ${totalPages || 1}`;
-            document.getElementById('prev-page').disabled = currentPage === 1;
-            document.getElementById('next-page').disabled = currentPage === totalPages;
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
         }
 
-        const sortedColumns = {
-            'NO_UNIT': 0, 'HM_AWAL': 1, 'HM_AKHIR': 2, 'SELISIH': 3, 'LITERAN': 4, 'PENJATAHAN': 5
-        };
+        // Update Unit Selection
+        function updateUnit() {
+            const unit = document.getElementById('unit-select').value;
+            document.getElementById('form-unit').value = unit;
+            window.location.href = `/?unit=${unit}`;
+        }
 
-        headers.forEach(header => {
-            header.addEventListener('click', () => {
-                const column = header.dataset.sort;
-                if (sortColumn === column) {
-                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        // Filter Data
+        function filterData() {
+            const unit = document.getElementById('filter-unit').value;
+            window.location.href = `/?filter_unit=${unit}`;
+        }
+
+        // Export Unit Link
+        const exportUnitSelect = document.getElementById('export-unit');
+        const exportUnitLink = document.getElementById('export-unit-link');
+        exportUnitSelect.addEventListener('change', () => {
+            exportUnitLink.href = `/export_unit/${exportUnitSelect.value}`;
+        });
+        exportUnitLink.href = `/export_unit/${exportUnitSelect.value}`;
+
+        // Confirm Reset
+        function confirmReset() {
+            if (confirm('Apakah Anda yakin ingin mereset semua data? Backup akan dibuat.')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("reset_data_route") }}';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Pagination for Historical Data
+        const tableBody = document.getElementById('historical-body');
+        const nextBtn = document.getElementById('next-btn');
+        const showAllBtn = document.getElementById('show-all-btn');
+        const rows = tableBody ? tableBody.getElementsByTagName('tr') : [];
+        let currentPage = 0;
+        const rowsPerPage = 10;
+
+        function updateTable() {
+            for (let i = 0; i < rows.length; i++) {
+                if (i >= currentPage * rowsPerPage && i < (currentPage + 1) * rowsPerPage) {
+                    rows[i].style.display = '';
                 } else {
-                    sortColumn = column;
-                    sortDirection = 'asc';
+                    rows[i].style.display = 'none';
                 }
-                headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
-                header.classList.add(`sorted-${sortDirection}`);
-                applyFiltersAndSort();
+            }
+            // Disable Next button if no more rows to show
+            nextBtn.disabled = (currentPage + 1) * rowsPerPage >= rows.length;
+        }
+
+        if (tableBody) {
+            // Initially show first 10 rows
+            updateTable();
+
+            // Next button click
+            nextBtn.addEventListener('click', () => {
+                if ((currentPage + 1) * rowsPerPage < rows.length) {
+                    currentPage++;
+                    updateTable();
+                }
             });
-        });
 
-        filterUnit.addEventListener('change', () => {
-            currentPage = 1;
-            applyFiltersAndSort();
-        });
-
-        document.getElementById('prev-page').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                applyFiltersAndSort();
-            }
-        });
-
-        document.getElementById('next-page').addEventListener('click', () => {
-            const totalPages = Math.ceil(rows.filter(row => !row.classList.contains('hidden')).length / rowsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                applyFiltersAndSort();
-            }
-        });
-
-        applyFiltersAndSort();
+            // Show all button click
+            showAllBtn.addEventListener('click', () => {
+                currentPage = 0;
+                for (let i = 0; i < rows.length; i++) {
+                    rows[i].style.display = '';
+                }
+                nextBtn.disabled = true; // Disable Next when showing all
+            });
+        }
     </script>
 </body>
 </html>
