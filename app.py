@@ -11,6 +11,15 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, String, Float, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import logging
+import urllib.parse
+import psycopg2
+import socket
+import traceback
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'supersecretkey')
@@ -25,6 +34,24 @@ app.jinja_env.filters['strftime'] = format_datetime
 
 # Konstanta
 DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    logger.error("DATABASE_URL environment variable is not set")
+    raise ValueError("DATABASE_URL environment variable is not set. Please configure it in Vercel.")
+
+# Encode password dalam DATABASE_URL
+def encode_database_url(url):
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.password:
+            encoded_password = urllib.parse.quote(parsed.password)
+            encoded_url = url.replace(parsed.password, encoded_password)
+            return encoded_url
+        return url
+    except Exception as e:
+        logger.error(f"Error encoding DATABASE_URL: {str(e)}")
+        return url
+
+DATABASE_URL = encode_database_url(DATABASE_URL)
 Base = declarative_base()
 LOCKED_UNITS = [
     "DR0011", "DR0025", "DZ1009", "DZ1022", "DZ3007", "DZ3014", "DZ3026",
@@ -66,10 +93,48 @@ class FuelRecord(Base):
     Buffer_Stock = Column(Float)
     is_new = Column(Boolean, default=False)
 
+# Log DNS resolution dan pooler mode
+def log_dns_resolution(host, port):
+    try:
+        ip_addresses = socket.getaddrinfo(host, port)
+        logger.info(f"DNS resolution for {host}:{port}: {ip_addresses}")
+    except socket.gaierror as e:
+        logger.error(f"DNS resolution failed for {host}:{port}: {str(e)}")
+
 # Inisialisasi database
-engine = create_engine(DATABASE_URL)
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
+try:
+    logger.info(f"Connecting to database: {DATABASE_URL}")
+    parsed_url = urllib.parse.urlparse(DATABASE_URL)
+    host = parsed_url.hostname
+    port = parsed_url.port or 5432
+    log_dns_resolution(host, port)
+    engine = create_engine(DATABASE_URL, connect_args={'connect_timeout': 10, 'sslmode': 'require'})
+    with engine.connect() as conn:
+        logger.info("Database connection test successful")
+        # Cek pooler mode
+        if port == 6543:
+            logger.info("Using Transaction Pooler (port 6543)")
+        elif port == 5432 and 'pooler' in host:
+            logger.info("Using Session Pooler (port 5432)")
+        else:
+            logger.info("Using direct connection")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    logger.info("Database initialized successfully")
+except psycopg2.OperationalError as e:
+    if "Cannot assign requested address" in str(e):
+        logger.error("Connection failed. Ensure platform supports IPv6 or use Transaction Pooler for IPv4 compatibility.")
+    elif "password authentication failed" in str(e):
+        logger.error("Password authentication failed. Verify the database password in Supabase.")
+    elif "Tenant or user not found" in str(e):
+        logger.error("Invalid username or project reference. Verify the username format (postgres.[PROJECT_REF]).")
+    elif "connection timed out" in str(e):
+        logger.error("Connection timed out. Check network or Supabase pooler configuration.")
+    logger.error(f"Failed to connect to database: {str(e)}")
+    raise RuntimeError(f"Failed to connect to database: {str(e)}")
+except Exception as e:
+    logger.error(f"Failed to connect to database: {str(e)}")
+    raise RuntimeError(f"Failed to connect to database: {str(e)}")
 
 # Fungsi data
 def load_or_create_data():
@@ -97,6 +162,9 @@ def load_or_create_data():
             "LITERAN", "PENJATAHAN", "Max_Capacity", "Buffer_Stock", "is_new"
         ]
         return pd.DataFrame(columns=columns)
+    except Exception as e:
+        logger.error(f"Error loading data: {str(e)}\n{traceback.format_exc()}")
+        raise
     finally:
         session.close()
 
@@ -121,7 +189,7 @@ def save_data(df):
         session.commit()
     except Exception as e:
         session.rollback()
-        print(f"Error saving data: {e}")
+        logger.error(f"Error saving data: {str(e)}\n{traceback.format_exc()}")
     finally:
         session.close()
 
@@ -130,6 +198,8 @@ def reset_data():
     try:
         session.query(FuelRecord).delete()
         session.commit()
+    except Exception as e:
+        logger.error(f"Error resetting data: {str(e)}\n{traceback.format_exc()}")
     finally:
         session.close()
 
@@ -232,89 +302,119 @@ def create_pdf_report(df, shift, date):
 # Routes
 @app.route('/')
 def index():
-    df = load_or_create_data()
-    units = LOCKED_UNITS
-    selected_unit = request.args.get('unit', units[0])
-    current_unit_data = df[df["NO_UNIT"] == selected_unit]
-    last_hm_akhir = get_hm_awal(df, selected_unit)
+    try:
+        df = load_or_create_data()
+        units = LOCKED_UNITS
+        selected_unit = request.args.get('unit', units[0])
+        current_unit_data = df[df["NO_UNIT"] == selected_unit]
+        last_hm_akhir = get_hm_awal(df, selected_unit)
 
-    filter_unit = request.args.get('filter_unit', 'Semua')
-    if filter_unit == 'Semua':
-        filtered_df = df
-    else:
-        filtered_df = df[df["NO_UNIT"] == filter_unit]
+        filter_unit = request.args.get('filter_unit', 'Semua')
+        if filter_unit == 'Semua':
+            filtered_df = df
+        else:
+            filtered_df = df[df["NO_UNIT"] == filter_unit]
 
-    unique_units = ['Semua'] + sorted(df["NO_UNIT"].unique().tolist()) if not df.empty else ['Semua']
-    return render_template(
-        'index.html',
-        units=units,
-        selected_unit=selected_unit,
-        last_hm_akhir=last_hm_akhir,
-        filtered_df=filtered_df.to_dict(orient='records'),
-        filter_unit=filter_unit,
-        unique_units=unique_units
-    )
+        unique_units = ['Semua'] + sorted(df["NO_UNIT"].unique().tolist()) if not df.empty else ['Semua']
+        return render_template(
+            'index.html',
+            units=units,
+            selected_unit=selected_unit,
+            last_hm_akhir=last_hm_akhir,
+            filtered_df=filtered_df.to_dict(orient='records'),
+            filter_unit=filter_unit,
+            unique_units=unique_units
+        )
+    except Exception as e:
+        logger.error(f"Error in index route: {str(e)}\n{traceback.format_exc()}")
+        flash("Gagal memuat data. Silakan coba lagi nanti.", 'error')
+        return render_template('index.html', units=LOCKED_UNITS, selected_unit='', last_hm_akhir=0.0, filtered_df=[], filter_unit='Semua', unique_units=['Semua'])
 
 @app.route('/add_record', methods=['POST'])
 def add_record():
-    no_unit = request.form['no_unit'].strip()
-    hm_akhir = float(request.form['hm_akhir'])
-    date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+    try:
+        no_unit = request.form['no_unit'].strip()
+        hm_akhir = float(request.form['hm_akhir'])
+        date = datetime.strptime(request.form['date'], '%Y-%m-%d')
 
-    df, record, error = add_new_record(no_unit, hm_akhir, date)
-    if error:
-        flash(error, 'error')
-    else:
-        flash(
-            f"Data untuk unit {no_unit} berhasil disimpan! "
-            f"Buffer Stock: <span class='text-yellow-400'>{record['Buffer_Stock']:.2f}</span> | "
-            f"Literan: <span class='text-yellow-400'>{record['LITERAN']:.2f}</span>",
-            'success'
-        )
-    return redirect(url_for('index', unit=no_unit))
+        df, record, error = add_new_record(no_unit, hm_akhir, date)
+        if error:
+            flash(error, 'error')
+        else:
+            flash(
+                f"Data untuk unit {no_unit} berhasil disimpan! "
+                f"Buffer Stock: <span class='text-yellow-400'>{record['Buffer_Stock']:.2f}</span> | "
+                f"Literan: <span class='text-yellow-400'>{record['LITERAN']:.2f}</span>",
+                'success'
+            )
+        return redirect(url_for('index', unit=no_unit))
+    except Exception as e:
+        logger.error(f"Error in add_record: {str(e)}\n{traceback.format_exc()}")
+        flash("Gagal menambahkan data. Silakan coba lagi.", 'error')
+        return redirect(url_for('index'))
 
 @app.route('/export_all')
 def export_all():
-    df = load_or_create_data()
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False)
-    output.seek(0)
-    return send_file(output, download_name='fuel_data_all.xlsx', as_attachment=True)
+    try:
+        df = load_or_create_data()
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        return send_file(output, download_name='fuel_data_all.xlsx', as_attachment=True)
+    except Exception as e:
+        logger.error(f"Error in export_all: {str(e)}\n{traceback.format_exc()}")
+        flash("Gagal mengekspor data. Silakan coba lagi.", 'error')
+        return redirect(url_for('index'))
 
 @app.route('/export_unit/<unit>')
 def export_unit(unit):
-    df = load_or_create_data()
-    df_unit = df[df["NO_UNIT"] == unit]
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_unit.to_excel(writer, index=False)
-    output.seek(0)
-    return send_file(output, download_name=f'fuel_data_{unit}.xlsx', as_attachment=True)
+    try:
+        df = load_or_create_data()
+        df_unit = df[df["NO_UNIT"] == unit]
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df_unit.to_excel(writer, index=False)
+        output.seek(0)
+        return send_file(output, download_name=f'fuel_data_{unit}.xlsx', as_attachment=True)
+    except Exception as e:
+        logger.error(f"Error in export_unit: {str(e)}\n{traceback.format_exc()}")
+        flash("Gagal mengekspor data unit. Silakan coba lagi.", 'error')
+        return redirect(url_for('index'))
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
-    report_date = datetime.strptime(request.form['report_date'], '%Y-%m-%d')
-    shift = request.form['shift']
-    df = load_or_create_data()
-    report_df = df[df["Date"] == report_date.strftime("%Y-%m-%d")]
-    if not report_df.empty:
-        pdf_buffer = create_pdf_report(report_df, shift, report_date)
-        return send_file(
-            pdf_buffer,
-            download_name=f"Plan_Refueling_Hauler_{report_date.strftime('%d_%b_%Y')}_Shift_{shift}.pdf",
-            as_attachment=True
-        )
-    else:
-        flash(f"Tidak ada data untuk tanggal {report_date.strftime('%d %b %Y')}.", 'error')
+    try:
+        report_date = datetime.strptime(request.form['report_date'], '%Y-%m-%d')
+        shift = request.form['shift']
+        df = load_or_create_data()
+        report_df = df[df["Date"] == report_date.strftime("%Y-%m-%d")]
+        if not report_df.empty:
+            pdf_buffer = create_pdf_report(report_df, shift, report_date)
+            return send_file(
+                pdf_buffer,
+                download_name=f"Plan_Refueling_Hauler_{report_date.strftime('%d_%b_%Y')}_Shift_{shift}.pdf",
+                as_attachment=True
+            )
+        else:
+            flash(f"Tidak ada data untuk tanggal {report_date.strftime('%d %b %Y')}.", 'error')
+            return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error in generate_pdf: {str(e)}\n{traceback.format_exc()}")
+        flash("Gagal menghasilkan PDF. Silakan coba lagi.", 'error')
         return redirect(url_for('index'))
 
 @app.route('/reset_data', methods=['POST'])
 def reset_data_route():
-    backup_data()
-    reset_data()
-    flash("Semua data berhasil dihapus! Backup telah dibuat.", 'success')
-    return redirect(url_for('index'))
+    try:
+        backup_data()
+        reset_data()
+        flash("Semua data berhasil dihapus! Backup telah dibuat.", 'success')
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error in reset_data: {str(e)}\n{traceback.format_exc()}")
+        flash("Gagal mereset data. Silakan coba lagi.", 'error')
+        return redirect(url_for('index'))
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
