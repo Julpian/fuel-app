@@ -17,9 +17,9 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'supersecretkey')
 
 # Tambahkan filter kustom strftime
 def format_datetime(value, format='%Y-%m-%d'):
-      if value == 'now':
-         return datetime.now().strftime(format)
-      return value.strftime(format)
+    if value == 'now':
+        return datetime.now().strftime(format)
+    return value.strftime(format)
 
 app.jinja_env.filters['strftime'] = format_datetime
 
@@ -28,20 +28,20 @@ DATABASE_URL = os.environ.get('DATABASE_URL')  # Ambil dari Vercel env
 Base = declarative_base()
 LOCKED_UNITS = ["DR0011", "DR0025", "DZ1009", "DZ1022", "DZ3007", "DZ3014", "DZ3026", "EX409", "EX421", "GR2021", "GR2026", "GR2009", "GR2050", "LD0045", "LD0046", "LD0069", "LD0143", "LD0145", "LD0146", "LD0150", "LD0152"]
 PENJATAHAN_MAP = {
-      "DR0011": 62, "DR0025": 62, "DZ1009": 35, "DZ1022": 35, "DZ3007": 60, "DZ3014": 51, "DZ3026": 60,
-      "EX409": 31, "EX421": 27, "GR2021": 30, "GR2026": 30, "GR2009": 30, "GR2050": 28,
-      "LD0045": 11, "LD0046": 11, "LD0069": 11, "LD0143": 11, "LD0145": 11, "LD0146": 11, "LD0150": 11, "LD0152": 10
+    "DR0011": 62, "DR0025": 62, "DZ1009": 35, "DZ1022": 35, "DZ3007": 60, "DZ3014": 51, "DZ3026": 60,
+    "EX409": 31, "EX421": 27, "GR2021": 30, "GR2026": 30, "GR2009": 30, "GR2050": 28,
+    "LD0045": 11, "LD0046": 11, "LD0069": 11, "LD0143": 11, "LD0145": 11, "LD0146": 11, "LD0150": 11, "LD0152": 10
 }
 MAX_CAPACITY_MAP = {
-      "DR0011": 800, "DR0025": 800, "DZ1009": 0, "DZ1022": 0, "DZ3007": 0, "DZ3014": 0, "DZ3026": 0,
-      "EX409": 0, "EX421": 0, "GR2021": 0, "GR2026": 0, "GR2009": 0, "GR2050": 0,
-      "LD0045": 0, "LD0046": 0, "LD0069": 0, "LD0143": 0, "LD0145": 0, "LD0146": 0, "LD0150": 0, "LD0152": 250
+    "DR0011": 800, "DR0025": 800, "DZ1009": 0, "DZ1022": 0, "DZ3007": 0, "DZ3014": 0, "DZ3026": 0,
+    "EX409": 0, "EX421": 0, "GR2021": 0, "GR2026": 0, "GR2009": 0, "GR2050": 0,
+    "LD0045": 0, "LD0046": 0, "LD0069": 0, "LD0143": 0, "LD0145": 0, "LD0146": 0, "LD0150": 0, "LD0152": 250
 }
 INITIAL_HM_AWAL = {
-      "DR0011": 100.0, "DR0025": 150.0, "DZ1009": 50.0, "DZ1022": 50.0, "DZ3007": 200.0, "DZ3014": 180.0,
-      "DZ3026": 200.0, "EX409": 80.0, "EX421": 70.0, "GR2021": 90.0, "GR2026": 90.0, "GR2009": 90.0,
-      "GR2050": 85.0, "LD0045": 30.0, "LD0046": 30.0, "LD0069": 30.0, "LD0143": 30.0, "LD0145": 30.0,
-      "LD0146": 30.0, "LD0150": 30.0, "LD0152": 25.0
+    "DR0011": 100.0, "DR0025": 150.0, "DZ1009": 50.0, "DZ1022": 50.0, "DZ3007": 200.0, "DZ3014": 180.0,
+    "DZ3026": 200.0, "EX409": 80.0, "EX421": 70.0, "GR2021": 90.0, "GR2026": 90.0, "GR2009": 90.0,
+    "GR2050": 85.0, "LD0045": 30.0, "LD0046": 30.0, "LD0069": 30.0, "LD0143": 30.0, "LD0145": 30.0,
+    "LD0146": 30.0, "LD0150": 30.0, "LD0152": 25.0
 }
 
 # Definisikan model database
