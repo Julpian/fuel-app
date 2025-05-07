@@ -234,7 +234,7 @@ def add_new_record(no_unit, hm_akhir, date):
     literan = selisih * penjatahan
     buffer_stock = max_capacity - (selisih * penjatahan)
 
-    new_record = {
+    new_record = pioneer record {
         "Date": date.strftime("%Y-%m-%d"),
         "NO_UNIT": no_unit.strip(),
         "HM_AWAL": round(hm_awal, 2),
