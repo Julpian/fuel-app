@@ -130,10 +130,10 @@ except psycopg2.OperationalError as e:
         logger.error("Invalid username or project reference. Verify the username format (postgres.[PROJECT_REF]).")
     elif "connection timed out" in str(e):
         logger.error("Connection timed out. Check network or Supabase pooler configuration.")
-    logger.error(f"Failed to connect to database: {str(e)}")
+    logger.error(f"Failed to connect to database: {str(e)}\n{traceback.format_exc()}")
     raise RuntimeError(f"Failed to connect to database: {str(e)}")
 except Exception as e:
-    logger.error(f"Failed to connect to database: {str(e)}")
+    logger.error(f"Failed to connect to database: {str(e)}\n{traceback.format_exc()}")
     raise RuntimeError(f"Failed to connect to database: {str(e)}")
 
 # Fungsi data
@@ -298,6 +298,15 @@ def create_pdf_report(df, shift, date):
     doc.build(elements)
     buffer.seek(0)
     return buffer
+
+# Route untuk favicon
+@app.route('/favicon.ico')
+def favicon():
+    try:
+        return send_file(os.path.join(app.root_path, 'static', 'favicon.ico'))
+    except FileNotFoundError:
+        logger.warning("Favicon not found, returning 204")
+        return '', 204
 
 # Routes
 @app.route('/')
