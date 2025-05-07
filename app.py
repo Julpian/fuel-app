@@ -24,7 +24,7 @@ def format_datetime(value, format='%Y-%m-%d'):
 app.jinja_env.filters['strftime'] = format_datetime
 
 # Konstanta
-DATABASE_URL = os.environ.get('DATABASE_URL')  # Ambil dari Vercel env
+DATABASE_URL = os.environ.get('DATABASE_URL')
 Base = declarative_base()
 LOCKED_UNITS = ["DR0011", "DR0025", "DZ1009", "DZ1022", "DZ3007", "DZ3014", "DZ3026", "EX409", "EX421", "GR2021", "GR2026", "GR2009", "GR2050", "LD0045", "LD0046", "LD0069", "LD0143", "LD0145", "LD0146", "LD0150", "LD0152"]
 PENJATAHAN_MAP = {
