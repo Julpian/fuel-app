@@ -10,7 +10,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'supersecretkey')
 
 # Tambahkan filter kustom strftime
 def format_datetime(value, format='%Y-%m-%d'):
@@ -21,7 +21,7 @@ def format_datetime(value, format='%Y-%m-%d'):
 app.jinja_env.filters['strftime'] = format_datetime
 
 # Konstanta
-DATA_FILE = "fuel_data.csv"
+DATA_FILE = "/tmp/fuel_data.csv"  # Gunakan /tmp untuk Vercel
 LOCKED_UNITS = ["DR0011", "DR0025", "DZ1009", "DZ1022", "DZ3007", "DZ3014", "DZ3026", "EX409", "EX421", "GR2021", "GR2026", "GR2009", "GR2050", "LD0045", "LD0046", "LD0069", "LD0143", "LD0145", "LD0146", "LD0150", "LD0152"]
 PENJATAHAN_MAP = {
     "DR0011": 62, "DR0025": 62, "DZ1009": 35, "DZ1022": 35, "DZ3007": 60, "DZ3014": 51, "DZ3026": 60,
@@ -34,27 +34,10 @@ MAX_CAPACITY_MAP = {
     "LD0045": 0, "LD0046": 0, "LD0069": 0, "LD0143": 0, "LD0145": 0, "LD0146": 0, "LD0150": 0, "LD0152": 250
 }
 INITIAL_HM_AWAL = {
-    "DR0011": 100.0,
-    "DR0025": 150.0,
-    "DZ1009": 50.0,
-    "DZ1022": 50.0,
-    "DZ3007": 200.0,
-    "DZ3014": 180.0,
-    "DZ3026": 200.0,
-    "EX409": 80.0,
-    "EX421": 70.0,
-    "GR2021": 90.0,
-    "GR2026": 90.0,
-    "GR2009": 90.0,
-    "GR2050": 85.0,
-    "LD0045": 30.0,
-    "LD0046": 30.0,
-    "LD0069": 30.0,
-    "LD0143": 30.0,
-    "LD0145": 30.0,
-    "LD0146": 30.0,
-    "LD0150": 30.0,
-    "LD0152": 25.0
+    "DR0011": 100.0, "DR0025": 150.0, "DZ1009": 50.0, "DZ1022": 50.0, "DZ3007": 200.0, "DZ3014": 180.0,
+    "DZ3026": 200.0, "EX409": 80.0, "EX421": 70.0, "GR2021": 90.0, "GR2026": 90.0, "GR2009": 90.0,
+    "GR2050": 85.0, "LD0045": 30.0, "LD0046": 30.0, "LD0069": 30.0, "LD0143": 30.0, "LD0145": 30.0,
+    "LD0146": 30.0, "LD0150": 30.0, "LD0152": 25.0
 }
 
 # Data Functions
@@ -68,7 +51,7 @@ def load_or_create_data():
         if "Buffer Stock" not in df.columns:
             df["Buffer Stock"] = df["Max Capacity"] - (df["SELISIH"] * df["PENJATAHAN"])
         if "is_new" not in df.columns:
-            df["is_new"] = False  # Tambahkan kolom is_new jika belum ada
+            df["is_new"] = False
         return df
     else:
         columns = ["Date", "NO_UNIT", "HM_AWAL", "HM_AKHIR", "SELISIH", "LITERAN", "PENJATAHAN", "Max Capacity", "Buffer Stock", "is_new"]
@@ -84,7 +67,7 @@ def reset_data():
 def backup_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
-        df.to_csv("backup_" + DATA_FILE, index=False)
+        df.to_csv("/tmp/backup_" + os.path.basename(DATA_FILE), index=False)
 
 def get_hm_awal(df, no_unit):
     unit_data = df[df["NO_UNIT"] == no_unit]
@@ -122,12 +105,10 @@ def add_new_record(no_unit, hm_akhir, date):
         "PENJATAHAN": penjatahan,
         "Max Capacity": max_capacity,
         "Buffer Stock": buffer_stock,
-        "is_new": True  # Tandai data baru
+        "is_new": True
     }
 
-    # Hapus tanda is_new dari data lama untuk unit yang sama
     df.loc[df["NO_UNIT"] == no_unit, "is_new"] = False
-
     df = pd.concat([df, pd.DataFrame([new_record])], ignore_index=True)
     save_data(df)
     return df, new_record, None
@@ -243,10 +224,5 @@ def reset_data_route():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
-import os
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
