@@ -15,7 +15,7 @@ from sqlalchemy.orm import sessionmaker
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'supersecretkey')
 
-# Tambahkan filter kustom strftime
+# Filter kustom strftime
 def format_datetime(value, format='%Y-%m-%d'):
     if value == 'now':
         return datetime.now().strftime(format)
@@ -26,25 +26,32 @@ app.jinja_env.filters['strftime'] = format_datetime
 # Konstanta
 DATABASE_URL = os.environ.get('DATABASE_URL')
 Base = declarative_base()
-LOCKED_UNITS = ["DR0011", "DR0025", "DZ1009", "DZ1022", "DZ3007", "DZ3014", "DZ3026", "EX409", "EX421", "GR2021", "GR2026", "GR2009", "GR2050", "LD0045", "LD0046", "LD0069", "LD0143", "LD0145", "LD0146", "LD0150", "LD0152"]
+LOCKED_UNITS = [
+    "DR0011", "DR0025", "DZ1009", "DZ1022", "DZ3007", "DZ3014", "DZ3026",
+    "EX409", "EX421", "GR2021", "GR2026", "GR2009", "GR2050",
+    "LD0045", "LD0046", "LD0069", "LD0143", "LD0145", "LD0146", "LD0150", "LD0152"
+]
 PENJATAHAN_MAP = {
-    "DR0011": 62, "DR0025": 62, "DZ1009": 35, "DZ1022": 35, "DZ3007": 60, "DZ3014": 51, "DZ3026": 60,
-    "EX409": 31, "EX421": 27, "GR2021": 30, "GR2026": 30, "GR2009": 30, "GR2050": 28,
-    "LD0045": 11, "LD0046": 11, "LD0069": 11, "LD0143": 11, "LD0145": 11, "LD0146": 11, "LD0150": 11, "LD0152": 10
+    "DR0011": 62, "DR0025": 62, "DZ1009": 35, "DZ1022": 35, "DZ3007": 60,
+    "DZ3014": 51, "DZ3026": 60, "EX409": 31, "EX421": 27, "GR2021": 30,
+    "GR2026": 30, "GR2009": 30, "GR2050": 28, "LD0045": 11, "LD0046": 11,
+    "LD0069": 11, "LD0143": 11, "LD0145": 11, "LD0146": 11, "LD0150": 11, "LD0152": 10
 }
 MAX_CAPACITY_MAP = {
-    "DR0011": 800, "DR0025": 800, "DZ1009": 0, "DZ1022": 0, "DZ3007": 0, "DZ3014": 0, "DZ3026": 0,
-    "EX409": 0, "EX421": 0, "GR2021": 0, "GR2026": 0, "GR2009": 0, "GR2050": 0,
-    "LD0045": 0, "LD0046": 0, "LD0069": 0, "LD0143": 0, "LD0145": 0, "LD0146": 0, "LD0150": 0, "LD0152": 250
+    "DR0011": 800, "DR0025": 800, "DZ1009": 0, "DZ1022": 0, "DZ3007": 0,
+    "DZ3014": 0, "DZ3026": 0, "EX409": 0, "EX421": 0, "GR2021": 0,
+    "GR2026": 0, "GR2009": 0, "GR2050": 0, "LD0045": 0, "LD0046": 0,
+    "LD0069": 0, "LD0143": 0, "LD0145": 0, "LD0146": 0, "LD0150": 0, "LD0152": 250
 }
 INITIAL_HM_AWAL = {
-    "DR0011": 100.0, "DR0025": 150.0, "DZ1009": 50.0, "DZ1022": 50.0, "DZ3007": 200.0, "DZ3014": 180.0,
-    "DZ3026": 200.0, "EX409": 80.0, "EX421": 70.0, "GR2021": 90.0, "GR2026": 90.0, "GR2009": 90.0,
-    "GR2050": 85.0, "LD0045": 30.0, "LD0046": 30.0, "LD0069": 30.0, "LD0143": 30.0, "LD0145": 30.0,
-    "LD0146": 30.0, "LD0150": 30.0, "LD0152": 25.0
+    "DR0011": 100.0, "DR0025": 150.0, "DZ1009": 50.0, "DZ1022": 50.0,
+    "DZ3007": 200.0, "DZ3014": 180.0, "DZ3026": 200.0, "EX409": 80.0,
+    "EX421": 70.0, "GR2021": 90.0, "GR2026": 90.0, "GR2009": 90.0,
+    "GR2050": 85.0, "LD0045": 30.0, "LD0046": 30.0, "LD0069": 30.0,
+    "LD0143": 30.0, "LD0145": 30.0, "LD0146": 30.0, "LD0150": 30.0, "LD0152": 25.0
 }
 
-# Definisikan model database
+# Model database
 class FuelRecord(Base):
     __tablename__ = 'fuel_records'
     id = Column(Integer, primary_key=True)
@@ -64,7 +71,7 @@ engine = create_engine(DATABASE_URL)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
-# Data Functions
+# Fungsi data
 def load_or_create_data():
     session = Session()
     try:
@@ -72,20 +79,23 @@ def load_or_create_data():
         if records:
             df = pd.DataFrame([
                 {
-                    "Date": r.Date,
-                    "NO_UNIT": r.NO_UNIT,
-                    "HM_AWAL": r.HM_AWAL,
-                    "HM_AKHIR": r.HM_AKHIR,
-                    "SELISIH": r.SELISIH,
-                    "LITERAN": r.LITERAN,
-                    "PENJATAHAN": r.PENJATAHAN,
-                    "Max Capacity": r.Max_Capacity,
-                    "Buffer Stock": r.Buffer_Stock,
+                    "Date": r.Date.strip() if r.Date else "",
+                    "NO_UNIT": r.NO_UNIT.strip() if r.NO_UNIT else "",
+                    "HM_AWAL": round(r.HM_AWAL, 2) if r.HM_AWAL else 0.0,
+                    "HM_AKHIR": round(r.HM_AKHIR, 2) if r.HM_AKHIR else 0.0,
+                    "SELISIH": round(r.SELISIH, 2) if r.SELISIH else 0.0,
+                    "LITERAN": round(r.LITERAN, 2) if r.LITERAN else 0.0,
+                    "PENJATAHAN": r.PENJATAHAN if r.PENJATAHAN else 0,
+                    "Max_Capacity": round(r.Max_Capacity, 2) if r.Max_Capacity else 0.0,
+                    "Buffer_Stock": round(r.Buffer_Stock, 2) if r.Buffer_Stock else 0.0,
                     "is_new": r.is_new
                 } for r in records
             ])
             return df
-        columns = ["Date", "NO_UNIT", "HM_AWAL", "HM_AKHIR", "SELISIH", "LITERAN", "PENJATAHAN", "Max Capacity", "Buffer Stock", "is_new"]
+        columns = [
+            "Date", "NO_UNIT", "HM_AWAL", "HM_AKHIR", "SELISIH",
+            "LITERAN", "PENJATAHAN", "Max_Capacity", "Buffer_Stock", "is_new"
+        ]
         return pd.DataFrame(columns=columns)
     finally:
         session.close()
@@ -96,16 +106,16 @@ def save_data(df):
         session.query(FuelRecord).delete()
         for _, row in df.iterrows():
             record = FuelRecord(
-                Date=row["Date"],
-                NO_UNIT=row["NO_UNIT"],
-                HM_AWAL=row["HM_AWAL"],
-                HM_AKHIR=row["HM_AKHIR"],
-                SELISIH=row["SELISIH"],
-                LITERAN=row["LITERAN"],
-                PENJATAHAN=row["PENJATAHAN"],
-                Max_Capacity=row["Max Capacity"],
-                Buffer_Stock=row["Buffer Stock"],
-                is_new=row["is_new"]
+                Date=str(row["Date"]).strip(),
+                NO_UNIT=str(row["NO_UNIT"]).strip(),
+                HM_AWAL=float(row["HM_AWAL"]),
+                HM_AKHIR=float(row["HM_AKHIR"]),
+                SELISIH=float(row["SELISIH"]),
+                LITERAN=float(row["LITERAN"]),
+                PENJATAHAN=int(row["PENJATAHAN"]),
+                Max_Capacity=float(row["Max_Capacity"]),
+                Buffer_Stock=float(row["Buffer_Stock"]),
+                is_new=bool(row["is_new"])
             )
             session.add(record)
         session.commit()
@@ -150,20 +160,20 @@ def add_new_record(no_unit, hm_akhir, date):
         return df, None, f"HM Akhir ({hm_akhir}) harus lebih besar dari HM Awal ({hm_awal})!"
 
     selisih = hm_akhir - hm_awal
-    selisih = round(selisih, 1)
+    selisih = round(selisih, 2)
     literan = selisih * penjatahan
     buffer_stock = max_capacity - (selisih * penjatahan)
 
     new_record = {
         "Date": date.strftime("%Y-%m-%d"),
-        "NO_UNIT": no_unit,
-        "HM_AWAL": hm_awal,
-        "HM_AKHIR": hm_akhir,
+        "NO_UNIT": no_unit.strip(),
+        "HM_AWAL": round(hm_awal, 2),
+        "HM_AKHIR": round(hm_akhir, 2),
         "SELISIH": selisih,
-        "LITERAN": literan,
+        "LITERAN": round(literan, 2),
         "PENJATAHAN": penjatahan,
-        "Max Capacity": max_capacity,
-        "Buffer Stock": buffer_stock,
+        "Max_Capacity": round(max_capacity, 2),
+        "Buffer_Stock": round(buffer_stock, 2),
         "is_new": True
     }
 
@@ -178,32 +188,40 @@ def create_pdf_report(df, shift, date):
     elements = []
 
     styles = getSampleStyleSheet()
-    title = Paragraph(f"PLAN REFUELING UNIT HAULER OB PERIODE {date.strftime('%b %Y').upper()}<br/>Shift: {shift} Tgl: {date.strftime('%d %b %Y')}", styles['Title'])
+    title = Paragraph(
+        f"PLAN REFUELING UNIT HAULER OB PERIODE {date.strftime('%b %Y').upper()}"
+        f"<br/>Shift: {shift} Tgl: {date.strftime('%d %b %Y')}",
+        styles['Title']
+    )
     elements.append(title)
     elements.append(Paragraph("<br/>", styles['Normal']))
 
-    data = [["Date", "UNIT", "Est HM Jam 12:00", "HM", "Qty Plan Refueling", "Note"]]
+    data = [["Date", "Unit", "Est HM Jam 12:00", "HM", "Qty Plan Refueling", "Note"]]
     for _, row in df.iterrows():
-        qty_plan = f"{row['LITERAN']:.1f}" if row['LITERAN'] > 0 else "Full" if row['Buffer Stock'] <= 0 else "-"
+        qty_plan = f"{row['LITERAN']:.2f}" if row['LITERAN'] > 0 else "Full" if row['Buffer_Stock'] <= 0 else "-"
         data.append([
             row["Date"],
             row["NO_UNIT"],
-            f"{row['HM_AWAL']:.1f}",
-            f"{row['SELISIH']:.1f}",
+            f"{row['HM_AWAL']:.2f}",
+            f"{row['SELISIH']:.2f}",
             qty_plan,
             ""
         ])
 
-    table = Table(data)
+    col_widths = [80, 60, 100, 60, 100, 100]
+    table = Table(data, colWidths=col_widths)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.goldenrod),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
         ('BACKGROUND', (0, 1), (-1, -1), colors.white),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
     ]))
     elements.append(table)
 
@@ -225,22 +243,34 @@ def index():
         filtered_df = df
     else:
         filtered_df = df[df["NO_UNIT"] == filter_unit]
-    
+
     unique_units = ['Semua'] + sorted(df["NO_UNIT"].unique().tolist()) if not df.empty else ['Semua']
-    return render_template('index.html', units=units, selected_unit=selected_unit, last_hm_akhir=last_hm_akhir, 
-                         filtered_df=filtered_df.to_dict(orient='records'), filter_unit=filter_unit, unique_units=unique_units)
+    return render_template(
+        'index.html',
+        units=units,
+        selected_unit=selected_unit,
+        last_hm_akhir=last_hm_akhir,
+        filtered_df=filtered_df.to_dict(orient='records'),
+        filter_unit=filter_unit,
+        unique_units=unique_units
+    )
 
 @app.route('/add_record', methods=['POST'])
 def add_record():
-    no_unit = request.form['no_unit']
+    no_unit = request.form['no_unit'].strip()
     hm_akhir = float(request.form['hm_akhir'])
     date = datetime.strptime(request.form['date'], '%Y-%m-%d')
-    
+
     df, record, error = add_new_record(no_unit, hm_akhir, date)
     if error:
         flash(error, 'error')
     else:
-        flash(f"Data untuk unit {no_unit} berhasil disimpan! Buffer Stock: <span class='text-yellow-400'>{record['Buffer Stock']}</span> | Literan: <span class='text-yellow-400'>{record['LITERAN']}</span>", 'success')
+        flash(
+            f"Data untuk unit {no_unit} berhasil disimpan! "
+            f"Buffer Stock: <span class='text-yellow-400'>{record['Buffer_Stock']:.2f}</span> | "
+            f"Literan: <span class='text-yellow-400'>{record['LITERAN']:.2f}</span>",
+            'success'
+        )
     return redirect(url_for('index', unit=no_unit))
 
 @app.route('/export_all')
@@ -270,7 +300,11 @@ def generate_pdf():
     report_df = df[df["Date"] == report_date.strftime("%Y-%m-%d")]
     if not report_df.empty:
         pdf_buffer = create_pdf_report(report_df, shift, report_date)
-        return send_file(pdf_buffer, download_name=f"Plan_Refueling_Hauler_{report_date.strftime('%d_%b_%Y')}_Shift_{shift}.pdf", as_attachment=True)
+        return send_file(
+            pdf_buffer,
+            download_name=f"Plan_Refueling_Hauler_{report_date.strftime('%d_%b_%Y')}_Shift_{shift}.pdf",
+            as_attachment=True
+        )
     else:
         flash(f"Tidak ada data untuk tanggal {report_date.strftime('%d %b %Y')}.", 'error')
         return redirect(url_for('index'))
