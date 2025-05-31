@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛽ Register - Fuel Entry App</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --bg-light: #f3f4f6;
+            --bg-dark: #1f2937;
+            --panel-light: #ffffff;
+            --panel-dark: #374151;
+            --text-light: #1f2937;
+            --text-dark: #e5e7eb;
+            --border-light: #e5e7eb;
+            --border-dark: #4b5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+        }
+
+        .panel {
+            background: var(--panel-light);
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .dark .panel {
+            background: var(--panel-dark);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel:hover {
+            transform: translateY(-2px);
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--panel-light);
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .dark .form-group input, .dark .form-group select {
+            background: var(--panel-dark);
+            border-color: var(--border-dark);
+            color: var(--text-dark);
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        button, a.button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover:not(:disabled), a.button:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        button {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        a.button {
+            background: #6b7280;
+            color: #fff;
+            margin-top: 12px;
+        }
+
+        a.button:hover:not(:disabled) {
+            background: #4b5563;
+        }
+
+        .toast {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px;
+            border-radius: 50%;
+            background: var(--border-light);
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .dark .theme-toggle {
+            background: var(--border-dark);
+        }
+
+        @media (max-width: 480px) {
+            .panel {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            button, a.button {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="theme-toggle" class="theme-toggle">
+            <i class="fas fa-moon dark:hidden"></i>
+            <i class="fas fa-sun hidden dark:block"></i>
+        </button>
+        <div class="panel">
+            <h2><i class="fas fa-user-plus"></i> Register Pengguna Baru</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="toast {{ 'success' if category == 'success' else 'error' }}">
+                            {{ message | safe }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="form-group">
+                    <label for="username"><i class="fas fa-user mr-1"></i> Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock mr-1"></i> Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="role"><i class="fas fa-user-tag mr-1"></i> Role</label>
+                    <select id="role" name="role" required>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit"><i class="fas fa-user-plus mr-2"></i>Register</button>
+            </form>
+            <a href="{{ url_for('index') }}" class="button"><i class="fas fa-arrow-left mr-2"></i>Kembali</a>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        });
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+        }
+
+        // Auto-hide toast after 5 seconds
+        const toasts = document.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

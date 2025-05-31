@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛽ Fuel Entry App</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --purple: #8b5cf6;
+            --purple-dark: #7c3aed;
+            --bg-light: #f3f4f6;
+            --bg-dark: #1f2937;
+            --panel-light: #ffffff;
+            --panel-dark: #374151;
+            --text-light: #1f2937;
+            --text-dark: #e5e7eb;
+            --border-light: #e5e7eb;
+            --border-dark: #4b5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--panel-light);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s;
+        }
+
+        .dark header {
+            background: var(--panel-dark);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 2fr;
+            }
+        }
+
+        .panel {
+            background: var(--panel-light);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .dark .panel {
+            background: var(--panel-dark);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel:hover {
+            transform: translateY(-2px);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--panel-light);
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .dark select, .dark input {
+            background: var(--panel-dark);
+            border-color: var(--border-dark);
+            color: var(--text-dark);
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        button, a.button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            margin-bottom: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover:not(:disabled), a.button:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn-excel {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .btn-excel:hover:not(:disabled) {
+            background: var(--success-dark);
+        }
+
+        .btn-pdf {
+            background: var(--purple);
+            color: #fff;
+        }
+
+        .btn-pdf:hover:not(:disabled) {
+            background: var(--purple-dark);
+        }
+
+        .btn-reset {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-reset:hover:not(:disabled) {
+            background: var(--danger-dark);
+        }
+
+        .pagination-btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            color: #fff;
+            font-size: 14px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .dark th, .dark td {
+            border-bottom: 1px solid var(--border-dark);
+        }
+
+        th {
+            background: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .dark th {
+            background: #4b5563;
+        }
+
+        tr.new {
+            background: #fefcbf;
+        }
+
+        .dark tr.new {
+            background: #744210;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .dark tr:hover {
+            background: #2d3748;
+        }
+
+        .sidebar {
+            margin-top: 20px;
+            background: var(--panel-light);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s;
+        }
+
+        .dark .sidebar {
+            background: var(--panel-dark);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle {
+            padding: 8px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .dark .theme-toggle {
+            background: #4b5563;
+        }
+
+        .overflow-x-auto {
+            overflow-x: auto;
+        }
+
+        .text-orange {
+            color: #f97316;
+        }
+
+        .text-gray {
+            color: #6b7280;
+        }
+
+        .text-rose {
+            color: var(--danger);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .flex {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
+
+        .flex {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-gas-pump"></i> Fuel Entry App</h1>
+            <div class="flex">
+                {% if current_user.is_authenticated %}
+                    <span class="text-sm font-medium">Selamat datang, <span class="text-orange">{{ current_user.username }}</span></span>
+                    <a href="{{ url_for('logout') }}" class="button btn-primary"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                    {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('register') }}" class="button btn-primary"><i class="fas fa-user-plus mr-2"></i>Tambah Pengguna</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="button btn-primary"><i class="fas fa-sign-in-alt mr-2"></i>Login</a>
+                {% endif %}
+                <button id="theme-toggle" class="theme-toggle">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+        </header>
+
+        {% if current_user.is_authenticated %}
+            <div class="grid">
+                <!-- Left Panel: Data Entry -->
+                <div class="panel">
+                    <h2><i class="fas fa-truck mr-2"></i>Pilih Unit</h2>
+                    <select id="unit-select" onchange="updateUnit()">
+                        {% for unit in units %}
+                            <option value="{{ unit }}" {% if unit == selected_unit %}selected{% endif %}>{{ unit }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div>
+                        <h3><i class="fas fa-file-alt mr-2"></i>Data Terakhir</h3>
+                        <p>HM Awal: <span class="text-orange font-medium">{{ last_hm_akhir | round(2) }}</span></p>
+                    </div>
+
+                    <h2><i class="fas fa-plus-circle mr-2"></i>Tambah Data</h2>
+                    <form action="{{ url_for('add_record') }}" method="POST" id="fuel-form">
+                        <input type="hidden" name="no_unit" id="form-unit" value="{{ selected_unit }}">
+                        <div class="form-group">
+                            <label for="date">Tanggal</label>
+                            <input type="date" id="date" name="date" value="{{ 'now'|strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hm_akhir">HM Akhir</label>
+                            <input type="number" id="hm_akhir" name="hm_akhir" step="0.1" required>
+                        </div>
+                        <button type="submit" class="btn-primary"><i class="fas fa-save mr-2"></i>Simpan</button>
+                    </form>
+
+                    <!-- Toast Notifications -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="toast {{ 'success' if category == 'success' else 'error' }}">
+                                    {{ message | safe }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Right Panel: Historical Data -->
+                <div class="panel">
+                    <h2><i class="fas fa-history mr-2"></i>Data Historis</h2>
+                    <div class="form-group">
+                        <label for="filter-unit">Filter Unit</label>
+                        <select onchange="filterData()" id="filter-unit">
+                            {% for unit in unique_units %}
+                                <option value="{{ unit }}" {% if unit == filter_unit %}selected{% endif %}>{{ unit }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if filtered_df %}
+                        <div class="overflow-x-auto">
+                            <table id="historical-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Unit</th>
+                                        <th>Shift</th>
+                                        <th>HM Awal</th>
+                                        <th>HM Akhir</th>
+                                        <th>Selisih</th>
+                                        <th>Literan</th>
+                                        <th>Penjatahan</th>
+                                        <th>Max Kapasitas</th>
+                                        <th>Buffer Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historical-body">
+                                    {% for row in filtered_df %}
+                                        <tr class="{% if row.is_new %}new{% endif %}">
+                                            <td>{{ row.Date }}</td>
+                                            <td>{{ row.NO_UNIT }}</td>
+                                            <td>{{ row.shift }}</td>
+                                            <td>{{ row.HM_Awal | round(2) }}</td>
+                                            <td>{{ row.HM_Akhir | round(2) }}</td>
+                                            <td>{{ row.Selisih | round(2) }}</td>
+                                            <td>{{ row.Literan | round(2) }}</td>
+                                            <td>{{ row.Penjatahan }}</td>
+                                            <td>{{ row.Max_Capacity | round(2) }}</td>
+                                            <td>{{ row.Buffer_Stock | round(2) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex gap-4 mt-4">
+                            <button id="next-btn" class="btn-primary pagination-btn"><i class="fas fa-arrow-right mr-2"></i>Berikutnya</button>
+                            <button id="show-all-btn" class="btn-primary"><i class="fas fa-table mr-2"></i>Tampilkan Semua</button>
+                        </div>
+                    {% else %}
+                        <p class="text-gray">Belum ada data.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar: Export, Reset, PDF -->
+            <div class="sidebar">
+                <h2><i class="fas fa-download mr-2"></i>Export & Laporan</h2>
+                <div class="flex flex-col gap-4">
+                    <a href="{{ url_for('export_all') }}" class="button btn-excel"><i class="fas fa-file-excel mr-2"></i>Export Semua</a>
+                    <div>
+                        <label for="export-unit">Unit Export</label>
+                        <select id="export-unit">
+                            {% for unit in units %}
+                                <option value="{{ unit }}">{{ unit }}</option>
+                            {% endfor %}
+                        </select>
+                        <a id="export-unit-link" href="#" class="button btn-excel"><i class="fas fa-file-excel mr-2"></i>Export Unit</a>
+                    </div>
+                    <div>
+                        <h3><i class="fas fa-file-pdf mr-2"></i>Laporan PDF</h3>
+                        <form action="{{ url_for('generate_pdf') }}" method="POST" class="form-grid">
+                            <div class="form-group">
+                                <label for="report_date">Tanggal</label>
+                                <input type="date" id="report_date" name="report_date" value="{{ 'now'|strftime('%Y-%m-%d') }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="shift">Shift (WIB)</label>
+                                <select id="shift" name="shift" required>
+                                    <option value="Shift 1">Shift 1 (06:00–18:00 WIB)</option>
+                                    <option value="Shift 2">Shift 2 (18:00–06:00 WIB)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-pdf"><i class="fas fa-file-pdf mr-2"></i>Buat PDF</button>
+                        </form>
+                    </div>
+                    {% if current_user.role == 'admin' %}
+                        <div>
+                            <h3 class="text-rose"><i class="fas fa-exclamation-triangle mr-2"></i>Reset</h3>
+                            <p class="text-gray">Hapus semua data, backup akan dibuat.</p>
+                            <button onclick="confirmReset()" class="btn-reset"><i class="fas fa-trash-alt mr-2"></i>Reset</button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="panel text-center">
+                <h2><i class="fas fa-lock mr-2"></i>Silakan Login</h2>
+                <p class="text-gray">Anda harus login untuk mengakses aplikasi.</p>
+                <a href="{{ url_for('login') }}" class="button btn-primary"><i class="fas fa-sign-in-alt mr-2"></i>Login</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        });
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+        }
+
+        // Update Unit Selection
+        function updateUnit() {
+            const unit = document.getElementById('unit-select').value;
+            document.getElementById('form-unit').value = unit;
+            window.location.href = `/?unit=${unit}`;
+        }
+
+        // Filter Data
+        function filterData() {
+            const unit = document.getElementById('filter-unit').value;
+            window.location.href = `/?filter_unit=${unit}`;
+        }
+
+        // Export Unit Link
+        const exportUnitSelect = document.getElementById('export-unit');
+        const exportUnitLink = document.getElementById('export-unit-link');
+        if (exportUnitSelect && exportUnitLink) {
+            exportUnitSelect.addEventListener('change', () => {
+                exportUnitLink.href = `/export_unit/${exportUnitSelect.value}`;
+            });
+            exportUnitLink.href = `/export_unit/${exportUnitSelect.value}`;
+        }
+
+        // Confirm Reset
+        function confirmReset() {
+            if (confirm('Yakin hapus semua data? Backup akan dibuat.')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("reset_data_route") }}';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Pagination for Historical Data
+        const tableBody = document.getElementById('historical-body');
+        const nextBtn = document.getElementById('next-btn');
+        const showAllBtn = document.getElementById('show-all-btn');
+        const rows = tableBody ? tableBody.getElementsByTagName('tr') : [];
+        let currentPage = 0;
+        const rowsPerPage = 10;
+
+        function updateTable() {
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = (i >= currentPage * rowsPerPage && i < (currentPage + 1) * rowsPerPage) ? '' : 'none';
+            }
+            if (nextBtn) {
+                nextBtn.disabled = (currentPage + 1) * rowsPerPage >= rows.length;
+            }
+        }
+
+        if (tableBody) {
+            updateTable();
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if ((currentPage + 1) * rowsPerPage < rows.length) {
+                        currentPage++;
+                        updateTable();
+                    }
+                });
+            }
+            if (showAllBtn) {
+                showAllBtn.addEventListener('click', () => {
+                    currentPage = 0;
+                    for (let i = 0; i < rows.length; i++) {
+                        rows[i].style.display = '';
+                    }
+                    if (nextBtn) {
+                        nextBtn.disabled = true;
+                    }
+                });
+            }
+        }
+
+        // Auto-hide toast after 5 seconds
+        const toasts = document.querySelectorAll('.toast');
+        toasts.forEach(toast => {
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
