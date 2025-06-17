@@ -63,7 +63,6 @@ def load_user(user_id):
         logger.error(f"Error loading user: {str(e)}")
         return None
 
-# Constants
 LOCKED_UNITS = [
     "DZ3007", "DZ3014", "DZ3026", "EX1022", "EX2017", "EX2027", "EX2032", "EX2033", "EX2040", "EX3009"
 ]
@@ -80,10 +79,10 @@ MAX_CAPACITY_MAP = {
     "EX3009": 3400
 }
 INITIAL_HM_Awal = {
-    "DZ3007": 45298, "DZ3014": 45932, "DZ3026": 20118,
-    "EX1022": 34288,
-    "EX2017": 45729, "EX2027": 35087, "EX2032": 26693, "EX2033": 25826, "EX2040": 18588,
-    "EX3009": 35523
+    "DZ3007": 45324, "DZ3014": 45964, "DZ3026": 20151,
+    "EX1022": 34317,
+    "EX2017": 46028, "EX2027": 35373, "EX2032": 27023, "EX2033": 26172, "EX2040": 18948,
+    "EX3009": 35880
 }
 
 # Custom strftime filter

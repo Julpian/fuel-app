@@ -1,177 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⛽ Login - Fuel Entry App</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Customizations for Tailwind CSS
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
     <style>
-        /* Gunakan CSS yang sama dari index.html untuk konsistensi */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
-            min-height: 100vh;
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .dark {
-            background-color: #1a202c;
-            color: #e2e8f0;
-        }
-
-        .container {
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .panel {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .dark .panel {
-            background-color: #2d3748;
-        }
-
-        h2 {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        .dark .form-group input {
-            background-color: #4a5568;
-            border-color: #718096;
-            color: #e2e8f0;
-        }
-
-        button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 8px;
-            border: none;
-            border-radius: 5px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            background: linear-gradient(90deg, #3b82f6, #2563eb);
-            color: #fff;
-            transition: background-color 0.2s, transform 0.1s;
-        }
-
-        button:hover:not(:disabled) {
-            background: linear-gradient(90deg, #2563eb, #1d4ed8);
-            transform: translateY(-1px);
-        }
-
+        /* Simple style for the toast messages if needed */
         .toast {
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            color: #fff;
-            font-size: 13px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            color: white;
+            font-size: 0.875rem;
             text-align: center;
         }
-
         .toast.success {
             background-color: #2f855a;
         }
-
         .toast.error {
             background-color: #c53030;
         }
-
-        .theme-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 5px;
-            border-radius: 50%;
-            background-color: #e2e8f0;
-            border: none;
-            cursor: pointer;
-        }
-
-        .dark .theme-toggle {
-            background-color: #4a5568;
+        .text-shadow {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-    <div class="container">
-        <button id="theme-toggle" class="theme-toggle">
-            <i class="fas fa-moon dark:hidden"></i>
-            <i class="fas fa-sun hidden dark:block"></i>
+<body class="h-full font-sans bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    
+    <div class="relative w-full min-h-screen">
+        <!-- Background Image -->
+        <img 
+            src="https://i.ibb.co/mB8y4bX/image-1e8fe3.jpg" 
+            alt="Excavator at a mining site during sunset"
+            class="absolute inset-0 w-full h-full object-cover"
+            onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/JouleJulius/gambar/main/fuel-app.png';"
+        >
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/60"></div>
+
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle" class="absolute top-6 right-6 z-30 p-2 rounded-full text-white/70 hover:text-white/100 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white">
+            <svg id="theme-icon-sun" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <svg id="theme-icon-moon" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
         </button>
-        <div class="panel">
-            <h2>⛽ Login</h2>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="toast {{ 'success' if category == 'success' else 'error' }}">
-                            {{ message | safe }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            <form method="POST" action="{{ url_for('login') }}">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+
+        <!-- Content Container -->
+        <div class="relative min-h-screen flex flex-col items-center justify-center lg:flex-row lg:justify-end">
+            
+            <!-- Welcome Text (Desktop Only) -->
+            <div class="hidden lg:block text-white text-right mr-16">
+                 <h1 class="text-5xl font-bold text-shadow">Selamat Datang</h1>
+                 <p class="text-xl mt-2 text-shadow">
+                    di aplikasi Fuel-App <br> PT Kalimantan Prima Persada
+                 </p>
+            </div>
+
+            <!-- Login Form Container -->
+            <div class="w-full max-w-sm p-6 lg:p-0 lg:mr-16 xl:mr-24">
+                
+                <div class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md p-8 rounded-2xl shadow-2xl">
+                    
+                    <!-- Welcome Text (Mobile Only) -->
+                    <div class="lg:hidden flex items-center justify-center h-screen flex-col text-center">
+                        <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">⛽ Selamat Datang</h2>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            di aplikasi Fuel-App <br> PT Kalimantan Prima Persada
+                        </p>
+                    </div>
+
+                     <!-- Login Title (Desktop Only) -->
+                    <div class="hidden lg:block text-center">
+                         <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Account Login</h2>
+                    </div>
+
+
+                    <div class="mt-8">
+                        <form action="#" method="POST" class="space-y-6">
+                            <div>
+                                <label for="username" class="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200">Username</label>
+                                <div class="mt-2">
+                                    <input id="username" name="username" type="text" required class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 bg-white/70 dark:bg-gray-700/50">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="password" class="block text-sm font-medium leading-6 text-gray-900 dark:text-gray-200">Password</label>
+                                <div class="mt-2">
+                                    <input id="password" name="password" type="password" autocomplete="current-password" required class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 bg-white/70 dark:bg-gray-700/50">
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600">
+                                    <label for="remember-me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Remember me</label>
+                                </div>
+                                <div class="text-sm">
+                                    <a href="#" class="font-medium text-blue-600 hover:text-blue-500">Forgot password?</a>
+                                </div>
+                            </div>
+
+                            <div>
+                                <button type="submit" class="flex w-full justify-center items-center rounded-md bg-blue-600 px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-transform transform hover:-translate-y-0.5">
+                                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
+                                    </svg>
+                                    Sign in
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <button type="submit"><i class="fas fa-sign-in-alt mr-2"></i>Login</button>
-            </form>
+
+            </div>
         </div>
     </div>
 
     <script>
-        // Theme Toggle
+        // --- THEME TOGGLE SCRIPT ---
         const themeToggle = document.getElementById('theme-toggle');
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark');
-            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-        });
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark');
+        const sunIcon = document.getElementById('theme-icon-sun');
+        const moonIcon = document.getElementById('theme-icon-moon');
+        const docHtml = document.documentElement;
+
+        // Apply theme on initial load
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            docHtml.classList.add('dark');
+        } else {
+            docHtml.classList.remove('dark');
         }
 
-        // Auto-hide toast after 5 seconds
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', () => {
+            if (docHtml.classList.contains('dark')) {
+                docHtml.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                docHtml.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // --- TOAST MESSAGE AUTO-HIDE SCRIPT ---
+        // This will find any toast messages and hide them after 5 seconds.
         const toasts = document.querySelectorAll('.toast');
         toasts.forEach(toast => {
             setTimeout(() => {
-                toast.style.display = 'none';
+                // Add a fade-out effect
+                toast.style.transition = 'opacity 0.5s ease';
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 500); // Wait for fade out to finish
             }, 5000);
         });
     </script>
