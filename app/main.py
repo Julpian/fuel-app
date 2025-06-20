@@ -8,8 +8,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
-from datetime import datetime, time
-import pytz
+from datetime import datetime
 import logging
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -88,31 +87,12 @@ INITIAL_HM_Awal = {
 # Custom strftime filter
 def format_datetime(value, format='%Y-%m-%d'):
     if value == 'now':
-        return datetime.now(pytz.timezone(os.environ.get('APP_TIMEZONE', 'Asia/Jakarta'))).strftime(format)
+        return datetime.now().strftime(format)
     return value.strftime(format)
 
 app.jinja_env.filters['strftime'] = format_datetime
 
 # Helper functions
-def determine_shift(time_str=None, timezone_str="Asia/Jakarta"):
-    try:
-        tz = pytz.timezone(timezone_str)
-        if time_str:
-            time_obj = datetime.strptime(time_str, "%H:%M").time()
-            logger.info(f"Parsed input time: {time_str}, Timezone: {timezone_str}")
-        else:
-            time_obj = datetime.now(tz).time()
-            logger.info(f"Using current time: {time_obj}, Timezone: {timezone_str}")
-        
-        start_shift1 = time(6, 0)
-        end_shift1 = time(18, 0)
-        shift = "Shift 1" if start_shift1 <= time_obj < end_shift1 else "Shift 2"
-        logger.info(f"Determined shift: {shift} for time {time_obj}")
-        return shift
-    except Exception as e:
-        logger.error(f"Error determining shift: {str(e)}")
-        return "Shift 2"
-
 def load_or_create_data():
     try:
         response = supabase.table('fuel_records').select('*').execute()
@@ -189,13 +169,11 @@ def get_penjatahan(no_unit):
 def get_max_capacity(no_unit):
     return MAX_CAPACITY_MAP.get(no_unit, 0)
 
-def add_new_record(no_unit, hm_akhir, date, time_str=None):
+def add_new_record(no_unit, hm_akhir, date, shift):
     df = load_or_create_data()
     hm_awal = get_hm_awal(df, no_unit)
     penjatahan = get_penjatahan(no_unit)
     max_capacity = get_max_capacity(no_unit)
-    timezone_str = os.environ.get('APP_TIMEZONE', 'Asia/Jakarta')
-    shift = determine_shift(time_str, timezone_str)
 
     if hm_akhir <= hm_awal:
         return df, None, f"HM Akhir ({hm_akhir}) harus lebih besar dari HM Awal ({hm_awal})!"
@@ -231,7 +209,11 @@ def create_pdf_report(df, shift, date):
     elements = []
 
     styles = getSampleStyleSheet()
-    shift_display = "Shift 1 (06:00–18:00 WITA)" if shift == "Shift 1" else "Shift 2 (18:00–06:00 WITA)"
+    shift_display = (
+        "Shift 1 (06:00–18:00 WITA)" if shift == "Shift 1" else
+        "Shift 2 (18:00–06:00 WITA)" if shift == "Shift 2" else
+        "Shift 1 & 2 (All Day)"
+    )
     title = Paragraph(
         f"PLAN REFUELING UNIT TRACK {date.strftime('%b %Y').upper()}"
         f"<br/>{shift_display} Tgl: {date.strftime('%d %b %Y')}",
@@ -379,16 +361,19 @@ def add_record():
         no_unit = request.form['no_unit'].strip()
         hm_akhir = float(request.form['hm_akhir'])
         date = datetime.strptime(request.form['date'], '%Y-%m-%d')
-        time_str = request.form.get('time')
+        shift = request.form['shift']
 
-        df, record, error = add_new_record(no_unit, hm_akhir, date, time_str)
+        if shift not in ["Shift 1", "Shift 2"]:
+            flash("Invalid shift type selected.", 'error')
+            return redirect(url_for('index', unit=no_unit))
+
+        df, record, error = add_new_record(no_unit, hm_akhir, date, shift)
         if error:
             flash(error, 'error')
         else:
-            shift_display = record.get('shift', 'Unknown')
             flash(
                 f"Data untuk unit {no_unit} berhasil disimpan! "
-                f"Shift: <span style='color:#facc15;font-weight:bold'>{shift_display}</span> | "
+                f"Shift: <span style='color:#facc15;font-weight:bold'>{shift}</span> | "
                 f"Buffer Stock: <span style='color:#facc15;font-weight:bold'>{record['Buffer_Stock']:.2f}</span> | "
                 f"Literan: <span style='color:#facc15;font-weight:bold'>{record['Literan']:.2f}</span>",
                 'success'
@@ -436,17 +421,23 @@ def generate_pdf():
     try:
         report_date = datetime.strptime(request.form['report_date'], '%Y-%m-%d')
         shift = request.form['shift']
-        if shift not in ["Shift 1", "Shift 2"]:
-            flash("Shift tidak valid. Pilih Shift 1 atau Shift 2.", 'error')
+        valid_shifts = ["Shift 1", "Shift 2", "Both"]
+        if shift not in valid_shifts:
+            flash("Shift tidak valid. Pilih Shift 1, Shift 2, atau Both.", 'error')
             return redirect(url_for('index'))
 
         df = load_or_create_data()
         if "shift" not in df.columns:
             df["shift"] = ""
-        report_df = df[(df["Date"] == report_date.strftime("%Y-%m-%d")) & (df["shift"] == shift)]
+        
+        if shift == "Both":
+            report_df = df[df["Date"] == report_date.strftime("%Y-%m-%d")]
+        else:
+            report_df = df[(df["Date"] == report_date.strftime("%Y-%m-%d")) & (df["shift"] == shift)]
+
         if not report_df.empty:
             pdf_buffer = create_pdf_report(report_df, shift, report_date)
-            shift_display = "Shift1_0600-1800" if shift == "Shift 1" else "Shift2_1800-0600"
+            shift_display = "Shift1_0600-1800" if shift == "Shift 1" else "Shift2_1800-0600" if shift == "Shift 2" else "Both_Shifts"
             return send_file(
                 pdf_buffer,
                 download_name=f"Plan_Refueling_Hauler_{report_date.strftime('%d_%b_%Y')}_{shift_display}.pdf",

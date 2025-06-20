@@ -8,22 +8,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --success: #10b981;
-            --success-dark: #059669;
-            --danger: #ef4444;
+            --primary: #4f46e5; /* Indigo cerah */
+            --primary-dark: #4338ca;
+            --success: #22c55e; /* Hijau segar */
+            --success-dark: #16a34a;
+            --danger: #f87171; /* Merah lembut */
             --danger-dark: #dc2626;
-            --purple: #8b5cf6;
-            --purple-dark: #7c3aed;
-            --bg-light: #f3f4f6;
-            --bg-dark: #1f2937;
+            --purple: #a855f7; /* Ungu modern */
+            --purple-dark: #9333ea;
+            --bg-light: #f9fafb; /* Latar belakang terang yang lembut */
+            --bg-dark: #111827; /* Latar belakang gelap yang kontras */
             --panel-light: #ffffff;
-            --panel-dark: #374151;
-            --text-light: #1f2937;
-            --text-dark: #e5e7eb;
+            --panel-dark: #1f2937;
+            --text-light: #111827; /* Teks gelap untuk keterbacaan */
+            --text-dark: #f3f4f6; /* Teks terang untuk mode gelap */
             --border-light: #e5e7eb;
-            --border-dark: #4b5563;
+            --border-dark: #374151;
         }
 
         * {
@@ -49,28 +49,28 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 24px;
+            padding: 16px;
             background: var(--panel-light);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: background-color 0.3s;
         }
 
         .dark header {
             background: var(--panel-dark);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
 
         h1 {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -78,21 +78,21 @@
         }
 
         h2 {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         h3 {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 24px;
         }
 
         @media (min-width: 768px) {
@@ -103,28 +103,28 @@
 
         .panel {
             background: var(--panel-light);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: background-color 0.3s, transform 0.2s;
         }
 
         .dark .panel {
             background: var(--panel-dark);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
 
         .panel:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
 
         select, input {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
             border: 1px solid var(--border-light);
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 15px;
             background: var(--panel-light);
             transition: border-color 0.3s, background-color 0.3s;
         }
@@ -138,62 +138,63 @@
         select:focus, input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
         }
 
         button, a.button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 16px;
-            margin-bottom: 12px;
+            padding: 12px 20px;
+            margin-bottom: 16px;
             border: none;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: 500;
             cursor: pointer;
             text-decoration: none;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
         }
 
         button:hover:not(:disabled), a.button:hover:not(:disabled) {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: #fff;
         }
 
         .btn-primary:hover:not(:disabled) {
-            background: var(--primary-dark);
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
         }
 
         .btn-excel {
-            background: var(--success);
+            background: linear-gradient(135deg, var(--success), var(--success-dark));
             color: #fff;
         }
 
         .btn-excel:hover:not(:disabled) {
-            background: var(--success-dark);
+            background: linear-gradient(135deg, var(--success-dark), var(--success));
         }
 
         .btn-pdf {
-            background: var(--purple);
+            background: linear-gradient(135deg, var(--purple), var(--purple-dark));
             color: #fff;
         }
 
         .btn-pdf:hover:not(:disabled) {
-            background: var(--purple-dark);
+            background: linear-gradient(135deg, var(--purple-dark), var(--purple));
         }
 
         .btn-reset {
-            background: var(--danger);
+            background: linear-gradient(135deg, var(--danger), var(--danger-dark));
             color: #fff;
         }
 
         .btn-reset:hover:not(:disabled) {
-            background: var(--danger-dark);
+            background: linear-gradient(135deg, var(--danger-dark), var(--danger));
         }
 
         .pagination-btn:disabled {
@@ -202,12 +203,12 @@
         }
 
         .toast {
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 12px;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
             color: #fff;
-            font-size: 14px;
-            animation: slideIn 0.5s ease-out;
+            font-size: 15px;
+            animation: slideIn 0.6s ease-out;
         }
 
         .toast.success {
@@ -219,18 +220,18 @@
         }
 
         @keyframes slideIn {
-            from { transform: translateY(-10px); opacity: 0; }
+            from { transform: translateY(-15px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         th, td {
-            padding: 12px;
+            padding: 14px;
             text-align: left;
             border-bottom: 1px solid var(--border-light);
         }
@@ -245,41 +246,41 @@
         }
 
         .dark th {
-            background: #4b5563;
+            background: #374151;
         }
 
         tr.new {
-            background: #fefcbf;
+            background: #fef3c7; /* Kuning lembut */
         }
 
         .dark tr.new {
-            background: #744210;
+            background: #78350f;
         }
 
         tr:hover {
-            background: #f9fafb;
+            background: #eff6ff; /* Biru sangat lembut */
         }
 
         .dark tr:hover {
-            background: #2d3748;
+            background: #1e3a8a;
         }
 
         .sidebar {
-            margin-top: 20px;
+            margin-top: 24px;
             background: var(--panel-light);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: background-color 0.3s;
         }
 
         .dark .sidebar {
             background: var(--panel-dark);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
 
         .theme-toggle {
-            padding: 8px;
+            padding: 10px;
             border-radius: 50%;
             background: #e5e7eb;
             border: none;
@@ -288,7 +289,7 @@
         }
 
         .dark .theme-toggle {
-            background: #4b5563;
+            background: #374151;
         }
 
         .overflow-x-auto {
@@ -296,7 +297,7 @@
         }
 
         .text-orange {
-            color: #f97316;
+            color: #f59e0b; /* Oranye yang lebih cerah */
         }
 
         .text-gray {
@@ -310,8 +311,8 @@
         .form-grid {
             display: grid;
             grid-template-columns: 3fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 16px;
+            margin-bottom: 16px;
         }
 
         @media (max-width: 768px) {
@@ -321,20 +322,27 @@
 
             header {
                 flex-direction: column;
-                gap: 12px;
+                gap: 16px;
                 align-items: flex-start;
             }
 
             .flex {
                 flex-wrap: wrap;
-                gap: 8px;
+                gap: 10px;
             }
         }
 
         .flex {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+        }
+
+        .form-group label {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: block;
         }
     </style>
 </head>
@@ -381,6 +389,13 @@
                         <div class="form-group">
                             <label for="date">Tanggal</label>
                             <input type="date" id="date" name="date" value="{{ 'now'|strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="shift">Shift (WITA)</label>
+                            <select id="shift" name="shift" required>
+                                <option value="Shift 1">Shift 1 (06:00–18:00 WITA)</option>
+                                <option value="Shift 2">Shift 2 (18:00–06:00 WITA)</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="hm_akhir">HM Akhir</label>
@@ -483,6 +498,7 @@
                                 <select id="shift" name="shift" required>
                                     <option value="Shift 1">Shift 1 (06:00–18:00 WITA)</option>
                                     <option value="Shift 2">Shift 2 (18:00–06:00 WITA)</option>
+                                    <option value="Both">Shift 1 & 2 (All Day)</option>
                                 </select>
                             </div>
                             <button type="submit" class="btn-pdf"><i class="fas fa-file-pdf mr-2"></i>Buat PDF</button>
@@ -521,13 +537,13 @@
         function updateUnit() {
             const unit = document.getElementById('unit-select').value;
             document.getElementById('form-unit').value = unit;
-            window.location.href = `/?unit=${unit}`;
+            window.location.href = `/? unit=${encodeURIComponent(unit)}`;
         }
 
         // Filter Data
         function filterData() {
             const unit = document.getElementById('filter-unit').value;
-            window.location.href = `/?filter_unit=${unit}`;
+            window.location.href = `/? filter_unit=${encodeURIComponent(unit)}`;
         }
 
         // Export Unit Link
@@ -535,9 +551,9 @@
         const exportUnitLink = document.getElementById('export-unit-link');
         if (exportUnitSelect && exportUnitLink) {
             exportUnitSelect.addEventListener('change', () => {
-                exportUnitLink.href = `/export_unit/${exportUnitSelect.value}`;
+                exportUnitLink.href = `/export_unit/${encodeURIComponent(exportUnitSelect.value)}`;
             });
-            exportUnitLink.href = `/export_unit/${exportUnitSelect.value}`;
+            exportUnitLink.href = `/export_unit/${encodeURIComponent(exportUnitSelect.value)}`;
         }
 
         // Confirm Reset
