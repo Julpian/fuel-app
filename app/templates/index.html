@@ -537,13 +537,13 @@
         function updateUnit() {
             const unit = document.getElementById('unit-select').value;
             document.getElementById('form-unit').value = unit;
-            window.location.href = `/? unit=${encodeURIComponent(unit)}`;
+            window.location.href = `/?unit=${encodeURIComponent(unit)}`; // Perbaikan: hapus spasi setelah ?
         }
 
         // Filter Data
         function filterData() {
             const unit = document.getElementById('filter-unit').value;
-            window.location.href = `/? filter_unit=${encodeURIComponent(unit)}`;
+            window.location.href = `/?filter_unit=${encodeURIComponent(unit)}`;
         }
 
         // Export Unit Link

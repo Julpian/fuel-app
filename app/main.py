@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, make_response
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import pandas as pd
 import os
@@ -261,7 +261,9 @@ def create_pdf_report(df, shift, date):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        unit = request.args.get('unit')
+        logger.info(f"Redirecting authenticated user to index, unit: {unit}")
+        return redirect(url_for('index', unit=unit) if unit else url_for('index'))
     
     if request.method == 'POST':
         username = request.form['username'].strip()
@@ -273,17 +275,23 @@ def login():
                 if check_password_hash(user_data['password_hash'], password):
                     user = User(user_data['id'], user_data['username'], user_data['role'])
                     login_user(user)
+                    unit = request.form.get('unit') or request.args.get('unit')
+                    logger.info(f"Login successful for {username}, redirecting to index, unit: {unit}")
                     flash('Login berhasil!', 'success')
-                    return redirect(url_for('index'))
+                    return redirect(url_for('index', unit=unit) if unit and unit in LOCKED_UNITS else url_for('index'))
                 else:
+                    logger.warning(f"Failed login attempt for {username}: incorrect password")
                     flash('Kata sandi salah.', 'error')
             else:
+                logger.warning(f"Failed login attempt: user {username} not found")
                 flash('Pengguna tidak ditemukan.', 'error')
         except Exception as e:
-            logger.error(f"Error during login: {str(e)}")
+            logger.error(f"Error during login for {username}: {str(e)}")
             flash('Terjadi kesalahan saat login. Silakan coba lagi.', 'error')
     
-    return render_template('login.html')
+    response = make_response(render_template('login.html'))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return response
 
 @app.route('/logout')
 @login_required
@@ -299,6 +307,13 @@ def index():
         df = load_or_create_data()
         units = LOCKED_UNITS
         selected_unit = request.args.get('unit', units[0])
+        logger.info(f"Received unit parameter: {request.args.get('unit')} | Selected unit: {selected_unit}")
+        
+        # Validasi selected_unit
+        if selected_unit not in units:
+            logger.warning(f"Invalid unit selected: {selected_unit}, defaulting to {units[0]}")
+            selected_unit = units[0]
+        
         current_unit_data = df[df["NO_UNIT"] == selected_unit]
         last_hm_akhir = get_hm_awal(df, selected_unit)
 
@@ -309,7 +324,9 @@ def index():
             filtered_df = df[df["NO_UNIT"] == filter_unit]
 
         unique_units = ['Semua'] + sorted(df["NO_UNIT"].unique().tolist()) if not df.empty else ['Semua']
-        return render_template(
+        
+        # Render template dengan header anti-cache
+        response = make_response(render_template(
             'index.html',
             units=units,
             selected_unit=selected_unit,
@@ -318,11 +335,22 @@ def index():
             filter_unit=filter_unit,
             unique_units=unique_units,
             current_user=current_user
-        )
+        ))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        return response
     except Exception as e:
         logger.error(f"Error in index route: {str(e)}")
         flash("Gagal memuat data. Silakan coba lagi nanti.", 'error')
-        return render_template('index.html', units=LOCKED_UNITS, selected_unit='', last_hm_akhir=0.0, filtered_df=[], filter_unit='Semua', unique_units=['Semua'], current_user=current_user)
+        return render_template(
+            'index.html',
+            units=LOCKED_UNITS,
+            selected_unit=units[0],
+            last_hm_akhir=0.0,
+            filtered_df=[],
+            filter_unit='Semua',
+            unique_units=['Semua'],
+            current_user=current_user
+        )
 
 @app.route('/register', methods=['GET', 'POST'])
 @login_required
@@ -382,7 +410,7 @@ def add_record():
     except Exception as e:
         logger.error(f"Error in add_record: {str(e)}")
         flash("Gagal menambahkan data. Silakan coba lagi.", 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('index', unit=request.form.get('no_unit', LOCKED_UNITS[0])))
 
 @app.route('/export_all')
 @login_required
