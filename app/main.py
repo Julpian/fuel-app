@@ -88,32 +88,63 @@ INITIAL_HM_Awal = {
 def format_datetime(value, format='%Y-%m-%d'):
     if value == 'now':
         return datetime.now().strftime(format)
-    return value.strftime(format)
+    # Ensure value is a datetime object before formatting
+    if isinstance(value, datetime):
+        return value.strftime(format)
+    return str(value) # Fallback to string conversion if not datetime
 
 app.jinja_env.filters['strftime'] = format_datetime
 
 # Helper functions
 def load_or_create_data():
+    """
+    Loads fuel records from Supabase, processes them into a Pandas DataFrame,
+    and ensures the DataFrame is sorted chronologically by Date and Shift.
+    """
     try:
         response = supabase.table('fuel_records').select('*').execute()
         records = response.data
         if records:
-            df = pd.DataFrame([
-                {
-                    "Date": r["Date"].strip() if r["Date"] else "",
-                    "NO_UNIT": r["NO_UNIT"].strip() if r["NO_UNIT"] else "",
-                    "HM_Awal": round(float(r["HM_Awal"]), 2) if r["HM_Awal"] else 0.0,
-                    "HM_Akhir": round(float(r["HM_Akhir"]), 2) if r["HM_Akhir"] else 0.0,
-                    "Selisih": round(float(r["Selisih"]), 2) if r["Selisih"] else 0.0,
-                    "Literan": round(float(r["Literan"]), 2) if r["Literan"] else 0.0,
-                    "Penjatahan": int(r["Penjatahan"]) if r["Penjatahan"] else 0,
-                    "Max_Capacity": round(float(r["Max_Capacity"]), 2) if r["Max_Capacity"] else 0.0,
-                    "Buffer_Stock": round(float(r["Buffer_Stock"]), 2) if r["Buffer_Stock"] else 0.0,
-                    "is_new": bool(r["is_new"]),
-                    "shift": r.get("shift", "")  # Default to empty string if shift is missing
-                } for r in records
-            ])
+            # Load records directly into DataFrame
+            df = pd.DataFrame(records)
+
+            # Ensure all required columns exist, adding them if missing
+            required_cols = [
+                "Date", "NO_UNIT", "HM_Awal", "HM_Akhir", "Selisih",
+                "Literan", "Penjatahan", "Max_Capacity", "Buffer_Stock", "is_new", "shift"
+            ]
+            for col in required_cols:
+                if col not in df.columns:
+                    df[col] = None # Add missing columns with None
+
+            # Convert column types and clean data
+            # errors='coerce' will turn unparseable dates into NaT (Not a Time)
+            df["Date"] = pd.to_datetime(df["Date"], errors='coerce') 
+            df["NO_UNIT"] = df["NO_UNIT"].astype(str).str.strip()
+            df["HM_Awal"] = df["HM_Awal"].astype(float).round(2)
+            df["HM_Akhir"] = df["HM_Akhir"].astype(float).round(2)
+            df["Selisih"] = df["Selisih"].astype(float).round(2)
+            df["Literan"] = df["Literan"].astype(float).round(2)
+            df["Penjatahan"] = df["Penjatahan"].astype(int)
+            df["Max_Capacity"] = df["Max_Capacity"].astype(float).round(2)
+            df["Buffer_Stock"] = df["Buffer_Stock"].astype(float).round(2)
+            df["is_new"] = df["is_new"].astype(bool)
+            # Ensure 'shift' is string and handle potential 'nan' values by replacing them with empty string
+            df["shift"] = df["shift"].astype(str).str.strip().replace('nan', '')
+
+            # Create a temporary 'shift_order' column for correct chronological sorting
+            # 'Shift 1' gets 1, 'Shift 2' gets 2, any other values get 3 (placing them last)
+            df['shift_order'] = df['shift'].map({'Shift 1': 1, 'Shift 2': 2}).fillna(3)
+
+            # Sort the DataFrame by Date (ascending) then by shift_order (ascending)
+            df = df.sort_values(by=['Date', 'shift_order'], ascending=[True, True])
+            
+            # Drop the temporary 'shift_order' column as it's no longer needed
+            df = df.drop(columns=['shift_order'])
+
             return df
+        
+        # If no records are found in Supabase, return an empty DataFrame with correct columns
         columns = [
             "Date", "NO_UNIT", "HM_Awal", "HM_Akhir", "Selisih",
             "Literan", "Penjatahan", "Max_Capacity", "Buffer_Stock", "is_new", "shift"
@@ -121,14 +152,24 @@ def load_or_create_data():
         return pd.DataFrame(columns=columns)
     except Exception as e:
         logger.error(f"Error loading data from Supabase: {str(e)}")
-        raise
+        # Re-raise the exception or return an empty DataFrame with appropriate columns on error
+        # Returning an empty DataFrame might prevent a full app crash
+        return pd.DataFrame(columns=required_cols if 'required_cols' in locals() else [])
 
 def save_data(df):
+    """
+    Saves the DataFrame back to Supabase. This function clears all existing records
+    and then inserts all records from the DataFrame.
+    """
     try:
+        # Delete all existing records in Supabase (as per original logic)
         supabase.table('fuel_records').delete().gte('id', 0).execute()
+        
+        records_to_insert = []
         for _, row in df.iterrows():
             record = {
-                "Date": str(row["Date"]).strip(),
+                # Convert datetime objects in 'Date' column back to string for Supabase
+                "Date": row["Date"].strftime("%Y-%m-%d") if pd.notna(row["Date"]) else None,
                 "NO_UNIT": str(row["NO_UNIT"]).strip(),
                 "HM_Awal": float(row["HM_Awal"]),
                 "HM_Akhir": float(row["HM_Akhir"]),
@@ -138,9 +179,13 @@ def save_data(df):
                 "Max_Capacity": float(row["Max_Capacity"]),
                 "Buffer_Stock": float(row["Buffer_Stock"]),
                 "is_new": bool(row["is_new"]),
-                "shift": str(row.get("shift", "Unknown")).strip()
+                "shift": str(row.get("shift", "")).strip()
             }
-            supabase.table('fuel_records').insert(record).execute()
+            records_to_insert.append(record)
+        
+        # Perform a batch insert if there are records to insert
+        if records_to_insert:
+            supabase.table('fuel_records').insert(records_to_insert).execute()
     except Exception as e:
         logger.error(f"Error saving data to Supabase: {str(e)}")
         raise
@@ -158,6 +203,12 @@ def backup_data():
         df.to_csv("backup_fuel_data.csv", index=False)
 
 def get_hm_awal(df, no_unit):
+    """
+    Gets the last HM_Akhir for a given unit from the sorted DataFrame.
+    If no records exist for the unit, it returns the initial HM_Awal.
+    """
+    # Since df is now guaranteed to be sorted chronologically by load_or_create_data(),
+    # filtering and taking the last element will correctly give the latest HM_Akhir.
     unit_data = df[df["NO_UNIT"] == no_unit]
     if not unit_data.empty:
         return unit_data["HM_Akhir"].iloc[-1]
@@ -170,7 +221,7 @@ def get_max_capacity(no_unit):
     return MAX_CAPACITY_MAP.get(no_unit, 0)
 
 def add_new_record(no_unit, hm_akhir, date, shift):
-    df = load_or_create_data()
+    df = load_or_create_data() # Load the data, which is now sorted
     hm_awal = get_hm_awal(df, no_unit)
     penjatahan = get_penjatahan(no_unit)
     max_capacity = get_max_capacity(no_unit)
@@ -184,7 +235,7 @@ def add_new_record(no_unit, hm_akhir, date, shift):
     buffer_stock = max_capacity - (selisih * penjatahan)
 
     new_record = {
-        "Date": date.strftime("%Y-%m-%d"),
+        "Date": date.strftime("%Y-%m-%d"), # Date is already a string here
         "NO_UNIT": no_unit.strip(),
         "HM_Awal": round(hm_awal, 2),
         "HM_Akhir": round(hm_akhir, 2),
@@ -196,11 +247,26 @@ def add_new_record(no_unit, hm_akhir, date, shift):
         "is_new": True,
         "shift": shift
     }
+    
+    # Convert 'Date' in new_record to datetime object before concatenating to df
+    # This ensures consistency with the df loaded by load_or_create_data
+    new_record_df = pd.DataFrame([new_record])
+    new_record_df["Date"] = pd.to_datetime(new_record_df["Date"], errors='coerce')
 
+    # Ensure 'shift' column exists in df before concatenation if it's new
     if "shift" not in df.columns:
         df["shift"] = ""
-    df = pd.concat([df, pd.DataFrame([new_record])], ignore_index=True)
-    save_data(df)
+    
+    df = pd.concat([df, new_record_df], ignore_index=True)
+    
+    # Re-sort the DataFrame after adding a new record to maintain chronological order
+    # for the *next* call to get_hm_awal without reloading all data.
+    # This is important if you plan to do multiple adds without a full page refresh.
+    df['shift_order'] = df['shift'].map({'Shift 1': 1, 'Shift 2': 2}).fillna(3)
+    df = df.sort_values(by=['Date', 'shift_order'], ascending=[True, True])
+    df = df.drop(columns=['shift_order'])
+
+    save_data(df) # Save the updated and sorted DataFrame
     return df, new_record, None
 
 def create_pdf_report(df, shift, date):
@@ -226,8 +292,10 @@ def create_pdf_report(df, shift, date):
     for _, row in df.iterrows():
         qty_plan = f"{row['Literan']:.2f}" if row['Literan'] > 0 else "Full" if row['Buffer_Stock'] <= 0 else "-"
         shift_value = row.get("shift", "Unknown")
+        # Ensure 'Date' is formatted correctly for PDF
+        display_date = row["Date"].strftime("%Y-%m-%d") if pd.notna(row["Date"]) else ""
         data.append([
-            row["Date"],
+            display_date,
             row["NO_UNIT"],
             shift_value,
             f"{row['HM_Awal']:.2f}",
@@ -304,7 +372,7 @@ def logout():
 @login_required
 def index():
     try:
-        df = load_or_create_data()
+        df = load_or_create_data() # Now df is guaranteed to be sorted
         units = LOCKED_UNITS
         selected_unit = request.args.get('unit', units[0])
         logger.info(f"Received unit parameter: {request.args.get('unit')} | Selected unit: {selected_unit}")
@@ -314,7 +382,7 @@ def index():
             logger.warning(f"Invalid unit selected: {selected_unit}, defaulting to {units[0]}")
             selected_unit = units[0]
         
-        current_unit_data = df[df["NO_UNIT"] == selected_unit]
+        # get_hm_awal now correctly fetches the latest HM_Akhir due to sorted df
         last_hm_akhir = get_hm_awal(df, selected_unit)
 
         filter_unit = request.args.get('filter_unit', 'Semua')
@@ -331,7 +399,9 @@ def index():
             units=units,
             selected_unit=selected_unit,
             last_hm_akhir=last_hm_akhir,
-            filtered_df=filtered_df.to_dict(orient='records'),
+            # Convert 'Date' column to string for display in the template table
+            # Make a copy to avoid SettingWithCopyWarning if you modify the original df later
+            filtered_df=filtered_df.copy().assign(Date=filtered_df['Date'].dt.strftime('%Y-%m-%d')).to_dict(orient='records'),
             filter_unit=filter_unit,
             unique_units=unique_units,
             current_user=current_user
@@ -341,10 +411,11 @@ def index():
     except Exception as e:
         logger.error(f"Error in index route: {str(e)}")
         flash("Gagal memuat data. Silakan coba lagi nanti.", 'error')
+        # Return a fallback render in case of error
         return render_template(
             'index.html',
             units=LOCKED_UNITS,
-            selected_unit=units[0],
+            selected_unit=LOCKED_UNITS[0],
             last_hm_akhir=0.0,
             filtered_df=[],
             filter_unit='Semua',
@@ -365,7 +436,8 @@ def register():
         role = request.form['role']
         try:
             response = supabase.table('users').select('username').eq('username', username).execute()
-            if response.data:
+            # Supabase select returns an object with a 'data' key which is a list
+            if response.data and len(response.data) > 0: # Check if data is not empty
                 flash('Username sudah ada.', 'error')
             else:
                 password_hash = generate_password_hash(password, method='pbkdf2:sha256')
@@ -419,7 +491,10 @@ def export_all():
         df = load_or_create_data()
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False)
+            # Ensure Date column is formatted as string for Excel export
+            df_export = df.copy()
+            df_export['Date'] = df_export['Date'].dt.strftime('%Y-%m-%d')
+            df_export.to_excel(writer, index=False)
         output.seek(0)
         return send_file(output, download_name='fuel_data_all.xlsx', as_attachment=True)
     except Exception as e:
@@ -432,9 +507,11 @@ def export_all():
 def export_unit(unit):
     try:
         df = load_or_create_data()
-        df_unit = df[df["NO_UNIT"] == unit]
+        df_unit = df[df["NO_UNIT"] == unit].copy() # Make a copy
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            # Ensure Date column is formatted as string for Excel export
+            df_unit['Date'] = df_unit['Date'].dt.strftime('%Y-%m-%d')
             df_unit.to_excel(writer, index=False)
         output.seek(0)
         return send_file(output, download_name=f'fuel_data_{unit}.xlsx', as_attachment=True)
@@ -454,14 +531,17 @@ def generate_pdf():
             flash("Shift tidak valid. Pilih Shift 1, Shift 2, atau Both.", 'error')
             return redirect(url_for('index'))
 
-        df = load_or_create_data()
+        df = load_or_create_data() # df is now sorted
         if "shift" not in df.columns:
             df["shift"] = ""
         
         if shift == "Both":
-            report_df = df[df["Date"] == report_date.strftime("%Y-%m-%d")]
+            # Filter by date only, then sort by shift for consistent PDF output
+            report_df = df[df["Date"] == report_date].copy()
+            report_df['shift_order'] = report_df['shift'].map({'Shift 1': 1, 'Shift 2': 2}).fillna(3)
+            report_df = report_df.sort_values(by='shift_order').drop(columns=['shift_order'])
         else:
-            report_df = df[(df["Date"] == report_date.strftime("%Y-%m-%d")) & (df["shift"] == shift)]
+            report_df = df[(df["Date"] == report_date) & (df["shift"] == shift)].copy()
 
         if not report_df.empty:
             pdf_buffer = create_pdf_report(report_df, shift, report_date)
@@ -498,3 +578,4 @@ def reset_data_route():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
